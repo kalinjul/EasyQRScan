@@ -1,0 +1,5 @@
+TEAM_ID=
+BUNDLE_ID=com.myapplication.MyApplication
+APP_NAME=QR Code Scanner Demo
+MODULE_NAME=shared
+REDIRECT_SCHEME=org.publicvalue.multiplatform.qrcode.sample
