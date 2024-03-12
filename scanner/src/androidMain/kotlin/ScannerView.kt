@@ -44,6 +44,7 @@ fun CameraView(
             )
 
             runCatching {
+                cameraProviderFuture.get().unbindAll()
                 cameraProviderFuture.get().bindToLifecycle(
                     lifecycleOwner,
                     selector,
