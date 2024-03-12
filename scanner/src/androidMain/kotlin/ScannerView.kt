@@ -1,6 +1,7 @@
 package org.publicvalue.multiplatform.qrcode
 
 import android.util.Log
+import android.widget.LinearLayout
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -16,14 +17,17 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 
 @Composable
-fun CameraView(analyzer: BarcodeAnalyzer) {
+fun CameraView(
+    modifier: Modifier = Modifier,
+    analyzer: BarcodeAnalyzer
+) {
     val localContext = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember {
         ProcessCameraProvider.getInstance(localContext)
     }
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         factory = { context ->
             val previewView = PreviewView(context)
             val preview = Preview.Builder().build()

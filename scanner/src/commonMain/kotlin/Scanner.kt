@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -19,7 +20,7 @@ expect fun Scanner(
 
 @Composable
 fun ScannerWithPermissions(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.clipToBounds(),
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
     permissionText: String = "Camera is required for QR Code scanning",
