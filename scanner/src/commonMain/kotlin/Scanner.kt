@@ -6,6 +6,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -22,7 +23,32 @@ fun ScannerWithPermissions(
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
     permissionText: String = "Camera is required for QR Code scanning",
-    openSettingsLabel: String = "Open Settings"
+    openSettingsLabel: String = "Open Settings",
+) {
+    ScannerWithPermissions(
+        modifier = modifier,
+        onScanned = onScanned,
+        types = types,
+        permissionDeniedContent = { permissionState ->
+            Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    modifier = Modifier.padding(6.dp),
+                    text = permissionText
+                )
+                Button(onClick = { permissionState.goToSettings() }) {
+                    Text(openSettingsLabel)
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun ScannerWithPermissions(
+    modifier: Modifier = Modifier,
+    onScanned: (String) -> Boolean,
+    types: List<CodeType>,
+    permissionDeniedContent: @Composable (CameraPermissionState) -> Unit,
 ) {
     val permissionState = rememberCameraPermissionState()
 
@@ -35,17 +61,6 @@ fun ScannerWithPermissions(
     if (permissionState.status == CameraPermissionStatus.Granted) {
         Scanner(modifier, types = types, onScanned = onScanned)
     } else {
-        // TODO provide custom view
-        Column(modifier) {
-            Text(
-                modifier = Modifier.padding(6.dp),
-                text = permissionText
-            )
-            Button(onClick = {
-                permissionState.goToSettings()
-            }) {
-                Text(openSettingsLabel)
-            }
-        }
+        permissionDeniedContent(permissionState)
     }
 }
