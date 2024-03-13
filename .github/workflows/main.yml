@@ -1,4 +1,4 @@
-name: Build main and release
+name: Build main
 
 on:
   push:
@@ -21,15 +21,15 @@ jobs:
   build:
     runs-on: macos-13
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/actions/build
-      - uses: ./.github/workflows/actions/doc
+      # - uses: ./.github/workflows/actions/doc
 
   test:
     needs: [ build ]
     runs-on: macos-13
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/actions/test
 
   deploy-snapshot:
@@ -38,7 +38,7 @@ jobs:
     runs-on: macos-13
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
           fetch-tags: true
