@@ -11,6 +11,7 @@ description = "Compose Multiplatform QR Code Scanner for Android/iOS"
 
 kotlin {
     configureIosTargets()
+    jvm()
 
     sourceSets {
         commonMain {
@@ -28,6 +29,11 @@ kotlin {
                 implementation(libs.androidx.camera.lifecycle)
                 implementation(libs.androidx.camera.view)
                 implementation(libs.mlkit.barcode.scanning)
+            }
+        }
+
+        jvmMain {
+            dependencies {
             }
         }
     }

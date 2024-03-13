@@ -11,13 +11,13 @@ Currently, the implementation is rather rudimentary.
 # Dependency
 Add the dependency to your commonMain sourceSet (KMP) / Android dependencies (android only):
 ```kotlin
-implementation("io.github.kalinjul.easyqrscan:scanner:0.1.1")
+implementation("io.github.kalinjul.easyqrscan:scanner:0.1.3")
 ```
 
 Or, for your libs.versions.toml:
 ```toml
 [versions]
-easyqrscan = "0.1.0"
+easyqrscan = "0.1.2"
 [libraries]
 easyqrscan = { module = "io.github.kalinjul.easyqrscan:scanner", version.ref = "easyqrscan" }
 ```
