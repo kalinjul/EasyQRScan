@@ -23,7 +23,7 @@ actual fun Scanner(
     val analyzer = remember() {
         BarcodeAnalyzer(types.toFormat(), onScanned)
     }
-    CameraView(analyzer)
+    CameraView(modifier, analyzer)
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
