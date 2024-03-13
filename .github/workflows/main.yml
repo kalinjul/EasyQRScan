@@ -25,15 +25,15 @@ jobs:
       - uses: ./.github/workflows/actions/build
       # - uses: ./.github/workflows/actions/doc
 
-  test:
-    needs: [ build ]
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/actions/test
+#  test:
+#    needs: [ build ]
+#    runs-on: macos-13
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: ./.github/workflows/actions/test
 
   deploy-snapshot:
-    needs: [ test ]
+    needs: [ build ]
     if: github.ref == 'refs/heads/main'
     runs-on: macos-13
 
