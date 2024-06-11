@@ -79,7 +79,6 @@ fun UiScannerView(
             val previewContainer = UIView()
             println("Calling prepare")
             coordinator.prepare(previewContainer.layer, allowedMetadataTypes)
-            previewContainer.backgroundColor = UIColor.cyanColor
             previewContainer
         },
         update = {
