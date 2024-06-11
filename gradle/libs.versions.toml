@@ -9,9 +9,9 @@ agp = "8.4.2"
 
 #https://github.com/JetBrains/compose-multiplatform
 compose-multiplatform = "1.6.11"
-kotlin = "1.9.22"
+kotlin = "2.0.0"
 # https://github.com/google/ksp
-ksp = "1.9.22-1.0.17"
+ksp = "2.0.0-1.0.21"
 
 #https://mvnrepository.com/artifact/org.jetbrains.compose.compiler/compiler
 #composeCompiler = "1.5.8.1"
@@ -49,6 +49,7 @@ dokka-gradlePlugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kmp = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin"}
 nexusPublish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus-publish-plugin"}

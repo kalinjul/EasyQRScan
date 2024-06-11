@@ -40,7 +40,6 @@ import platform.Foundation.NSError
 import platform.QuartzCore.CALayer
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
-import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
 import platform.UIKit.UIDeviceOrientation
 import platform.UIKit.UIView
@@ -190,7 +189,7 @@ class ScannerCameraCoordinator(
         }
     }
 
-    override fun captureOutput(output: platform.AVFoundation.AVCaptureOutput, didOutputMetadataObjects: kotlin.collections.List<*>, fromConnection: platform.AVFoundation.AVCaptureConnection) {
+    override fun captureOutput(output: platform.AVFoundation.AVCaptureOutput, didOutputMetadataObjects: List<*>, fromConnection: platform.AVFoundation.AVCaptureConnection) {
         val metadataObject = didOutputMetadataObjects.firstOrNull() as? AVMetadataMachineReadableCodeObject
         metadataObject?.stringValue?.let { onFound(it) }
     }
