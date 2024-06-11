@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.dp
 import org.publicvalue.multiplatform.qrcode.CodeType
 import org.publicvalue.multiplatform.qrcode.ScannerWithPermissions
@@ -27,7 +26,7 @@ fun MainView() {
         }
         if (scannerVisible) {
             ScannerWithPermissions(
-                modifier = Modifier.padding(16.dp).clipToBounds(),
+                modifier = Modifier.padding(16.dp),
                 onScanned = { println(it); true }, types = listOf(CodeType.QR)
             )
         }

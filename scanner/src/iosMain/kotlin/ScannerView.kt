@@ -1,5 +1,6 @@
 package org.publicvalue.multiplatform.qrcode
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
@@ -73,7 +74,7 @@ fun UiScannerView(
     }
 
     UIKitView(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         background = Color.Black,
         factory = {
             val previewContainer = UIView()
