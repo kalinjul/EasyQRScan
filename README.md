@@ -8,16 +8,23 @@
 QR-Code (or other 2D/3D-Codes, see below) Scanner for Compose Multiplatform (Android/iOS).
 Currently, the implementation is rather rudimentary.
 
+Supported Compose version:
+
+Compose version | EasyQRScan Version
+------------------|-------------------
+1.6.x             | 0.1.x
+1.7               | Not yet supported
+
 # Dependency
 Add the dependency to your commonMain sourceSet (KMP) / Android dependencies (android only):
 ```kotlin
-implementation("io.github.kalinjul.easyqrscan:scanner:0.1.3")
+implementation("io.github.kalinjul.easyqrscan:scanner:0.1.5")
 ```
 
 Or, for your libs.versions.toml:
 ```toml
 [versions]
-easyqrscan = "0.1.3"
+easyqrscan = "0.1.5"
 [libraries]
 easyqrscan = { module = "io.github.kalinjul.easyqrscan:scanner", version.ref = "easyqrscan" }
 ```
