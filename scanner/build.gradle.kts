@@ -4,7 +4,7 @@ plugins {
     id("org.publicvalue.convention.android.library")
     id("org.publicvalue.convention.kotlin.multiplatform.mobile")
     id("org.publicvalue.convention.centralPublish")
-    id("org.jetbrains.compose")
+    id("org.publicvalue.convention.compose.multiplatform")
 }
 
 description = "Compose Multiplatform QR Code Scanner for Android/iOS"

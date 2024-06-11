@@ -10,10 +10,10 @@ Currently, the implementation is rather rudimentary.
 
 Supported Compose version:
 
-Compose version | EasyQRScan Version
-------------------|-------------------
-1.6.x             | 0.1.x
-1.7               | Not yet supported
+ | Compose version | EasyQRScan Version |
+|-----------------|--------------------|
+| 1.6.x           | 0.1.x              |
+| 1.7             | Not yet supported  |
 
 # Dependency
 Add the dependency to your commonMain sourceSet (KMP) / Android dependencies (android only):
