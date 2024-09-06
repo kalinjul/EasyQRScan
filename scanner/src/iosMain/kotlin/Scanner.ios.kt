@@ -26,7 +26,8 @@ actual fun Scanner(
         modifier = modifier,
         onScanned = {
             onScanned(it)
-        }
+        },
+        allowedMetadataTypes = types.toFormat()
     )
 }
 

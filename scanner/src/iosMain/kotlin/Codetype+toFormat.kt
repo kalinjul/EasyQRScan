@@ -13,7 +13,7 @@ import platform.AVFoundation.AVMetadataObjectTypePDF417Code
 import platform.AVFoundation.AVMetadataObjectTypeQRCode
 import platform.AVFoundation.AVMetadataObjectTypeUPCECode
 
-private fun List<CodeType>.toFormat(): List<platform.AVFoundation.AVMetadataObjectType> = map {
+fun List<CodeType>.toFormat(): List<platform.AVFoundation.AVMetadataObjectType> = map {
     when(it) {
         CodeType.Codabar -> AVMetadataObjectTypeCodabarCode
         CodeType.Code39 -> AVMetadataObjectTypeCode39Code
