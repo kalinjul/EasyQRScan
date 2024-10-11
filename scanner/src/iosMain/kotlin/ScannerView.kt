@@ -51,7 +51,7 @@ import platform.darwin.dispatch_get_main_queue
 fun UiScannerView(
     modifier: Modifier = Modifier,
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
-    allowedMetadataTypes: List<AVMetadataObjectType> = listOf(AVMetadataObjectTypeQRCode),
+    allowedMetadataTypes: List<AVMetadataObjectType>,
     onScanned: (String) -> Boolean
 ) {
     val coordinator = remember {
