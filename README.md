@@ -18,13 +18,13 @@ Supported Compose version:
 # Dependency
 Add the dependency to your commonMain sourceSet (KMP) / Android dependencies (android only):
 ```kotlin
-implementation("io.github.kalinjul.easyqrscan:scanner:0.1.5")
+implementation("io.github.kalinjul.easyqrscan:scanner:0.1.6")
 ```
 
 Or, for your libs.versions.toml:
 ```toml
 [versions]
-easyqrscan = "0.1.5"
+easyqrscan = "0.1.6"
 [libraries]
 easyqrscan = { module = "io.github.kalinjul.easyqrscan:scanner", version.ref = "easyqrscan" }
 ```
