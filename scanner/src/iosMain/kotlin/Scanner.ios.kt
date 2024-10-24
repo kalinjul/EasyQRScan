@@ -15,7 +15,6 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationOpenSettingsURLString
 
-
 @Composable
 actual fun Scanner(
     modifier: Modifier,

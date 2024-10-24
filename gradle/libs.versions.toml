@@ -8,16 +8,16 @@ jvmTarget = "17"
 agp = "8.4.2"
 
 #https://github.com/JetBrains/compose-multiplatform
-compose-multiplatform = "1.6.11"
-kotlin = "2.0.0"
+compose-multiplatform = "1.7.0"
+kotlin = "2.0.20"
 # https://github.com/google/ksp
-ksp = "2.0.0-1.0.21"
+ksp = "2.0.20-1.0.25"
 
 #https://mvnrepository.com/artifact/org.jetbrains.compose.compiler/compiler
 #composeCompiler = "1.5.8.1"
 
 # https://developer.android.com/jetpack/androidx/releases/activity
-androidxActivity = "1.9.0"
+androidxActivity = "1.9.3"
 # https://developer.android.com/jetpack/androidx/releases/appcompat
 androidxAppCompat = "1.7.0"
 coreKtx = "1.13.1"
@@ -25,8 +25,8 @@ coreKtx = "1.13.1"
 dokka = "1.9.10"
 nexus-publish-plugin = "1.3.0"
 accompanist = "0.34.0"
-androidxCamera = "1.3.3"
-mlkit = "17.2.0"
+androidxCamera = "1.3.4"
+mlkit = "17.3.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
