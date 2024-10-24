@@ -203,8 +203,6 @@ class ScannerCameraCoordinator(
     }
 
     fun onFound(code: String) {
-        // kSystemSoundID_UserPreferredAlert = 0x00001000
-        AudioServicesPlaySystemSound(0x1000u) // Mail-Sound 1108 wäre der Photo Sound
         captureSession.stopRunning()
         if (!onScanned(code)) {
             GlobalScope.launch(Dispatchers.Default) {
