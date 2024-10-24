@@ -5,13 +5,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.interop.UIKitView
+import androidx.compose.ui.viewinterop.UIKitInteropProperties
+import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.cValue
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.useContents
@@ -33,9 +34,9 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
-import platform.AVFoundation.AVMetadataObjectTypeQRCode
 import platform.AudioToolbox.AudioServicesPlaySystemSound
 import platform.CoreGraphics.CGRect
+import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
 import platform.QuartzCore.CALayer
 import platform.QuartzCore.CATransaction
@@ -46,7 +47,6 @@ import platform.UIKit.UIView
 import platform.darwin.NSObject
 import platform.darwin.dispatch_get_main_queue
 
-@OptIn(ExperimentalForeignApi::class)
 @Composable
 fun UiScannerView(
     modifier: Modifier = Modifier,
@@ -72,24 +72,18 @@ fun UiScannerView(
         }
     }
 
-    UIKitView(
+    UIKitView<UIView>(
         modifier = modifier.fillMaxSize(),
-        background = Color.Black,
         factory = {
-            val previewContainer = UIView()
+            val previewContainer = ScannerPreviewView(coordinator)
             println("Calling prepare")
             coordinator.prepare(previewContainer.layer, allowedMetadataTypes)
             previewContainer
         },
-        update = {
-        },
-        onResize = { view, rect ->
-            CATransaction.begin()
-            CATransaction.setValue(true, kCATransactionDisableActions)
-            view.layer.setFrame(rect)
-            coordinator.setFrame(rect)
-            CATransaction.commit()
-        }
+        properties = UIKitInteropProperties(
+            isInteractive = true,
+            isNativeAccessibilityEnabled = true,
+        )
     )
 
 //    DisposableEffect(Unit) {
@@ -99,6 +93,20 @@ fun UiScannerView(
 //        }
 //    }
 
+}
+
+@OptIn(ExperimentalForeignApi::class)
+class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIView(frame = cValue { CGRectZero }) {
+    @OptIn(ExperimentalForeignApi::class)
+    override fun layoutSubviews() {
+        super.layoutSubviews()
+        CATransaction.begin()
+        CATransaction.setValue(true, kCATransactionDisableActions)
+
+        layer.setFrame(frame)
+        coordinator.setFrame(frame)
+        CATransaction.commit()
+    }
 }
 
 @OptIn(ExperimentalForeignApi::class)
@@ -195,8 +203,6 @@ class ScannerCameraCoordinator(
     }
 
     fun onFound(code: String) {
-        // kSystemSoundID_UserPreferredAlert = 0x00001000
-        AudioServicesPlaySystemSound(0x1000u) // Mail-Sound 1108 wäre der Photo Sound
         captureSession.stopRunning()
         if (!onScanned(code)) {
             GlobalScope.launch(Dispatchers.Default) {
