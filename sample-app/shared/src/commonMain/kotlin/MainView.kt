@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.publicvalue.multiplatform.qrcode.CameraPosition
 import org.publicvalue.multiplatform.qrcode.CodeType
 import org.publicvalue.multiplatform.qrcode.ScannerWithPermissions
 
@@ -43,7 +44,9 @@ fun MainView() {
                             snackbarHostState.showSnackbar(it, duration = SnackbarDuration.Short)
                         }
                         false // continue scanning
-                    }, types = listOf(CodeType.QR)
+                    },
+                    types = listOf(CodeType.QR),
+                    cameraPosition = CameraPosition.BACK
                 )
             }
         }

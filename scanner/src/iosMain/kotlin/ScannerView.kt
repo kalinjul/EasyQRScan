@@ -22,6 +22,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVCaptureDeviceInput
+import platform.AVFoundation.AVCaptureDevicePositionBack
+import platform.AVFoundation.AVCaptureDevicePositionFront
 import platform.AVFoundation.AVCaptureMetadataOutput
 import platform.AVFoundation.AVCaptureMetadataOutputObjectsDelegateProtocol
 import platform.AVFoundation.AVCaptureSession
@@ -34,7 +36,7 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
-import platform.AudioToolbox.AudioServicesPlaySystemSound
+import platform.AVFoundation.position
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
@@ -52,11 +54,13 @@ fun UiScannerView(
     modifier: Modifier = Modifier,
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
     allowedMetadataTypes: List<AVMetadataObjectType>,
+    cameraPosition: CameraPosition,
     onScanned: (String) -> Boolean
 ) {
     val coordinator = remember {
         ScannerCameraCoordinator(
-            onScanned = onScanned
+            onScanned = onScanned,
+            cameraPosition = cameraPosition
         )
     }
 
@@ -111,7 +115,8 @@ class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIV
 
 @OptIn(ExperimentalForeignApi::class)
 class ScannerCameraCoordinator(
-    val onScanned: (String) -> Boolean
+    val onScanned: (String) -> Boolean,
+    val cameraPosition: CameraPosition
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
     private var previewLayer: AVCaptureVideoPreviewLayer? = null
@@ -120,7 +125,18 @@ class ScannerCameraCoordinator(
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     fun prepare(layer: CALayer, allowedMetadataTypes: List<AVMetadataObjectType>) {
         captureSession = AVCaptureSession()
-        val device = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
+        val devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo).map { it as AVCaptureDevice }
+
+        val device = devices.firstOrNull { device ->
+            when(cameraPosition) {
+                CameraPosition.FRONT -> device.position == AVCaptureDevicePositionFront
+                CameraPosition.BACK -> device.position == AVCaptureDevicePositionBack
+            }
+        } ?: run {
+            println("Could not find camera with position: $cameraPosition, using default camera")
+            AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
+        }
+
         if (device == null) {
             println("Device has no camera")
             return
