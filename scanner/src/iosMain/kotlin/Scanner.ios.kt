@@ -19,14 +19,16 @@ import platform.UIKit.UIApplicationOpenSettingsURLString
 actual fun Scanner(
     modifier: Modifier,
     onScanned: (String) -> Boolean, // return true to abort scanning
-    types: List<CodeType>
+    types: List<CodeType>,
+    cameraPosition: CameraPosition
 ) {
     UiScannerView(
         modifier = modifier,
         onScanned = {
             onScanned(it)
         },
-        allowedMetadataTypes = types.toFormat()
+        allowedMetadataTypes = types.toFormat(),
+        cameraPosition = cameraPosition
     )
 }
 

@@ -19,7 +19,8 @@ import androidx.core.content.ContextCompat
 @Composable
 fun CameraView(
     modifier: Modifier = Modifier,
-    analyzer: BarcodeAnalyzer
+    analyzer: BarcodeAnalyzer,
+    cameraPosition: CameraPosition
 ) {
     val localContext = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -32,7 +33,12 @@ fun CameraView(
             val previewView = PreviewView(context)
             val preview = Preview.Builder().build()
             val selector = CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .let {
+                    when (cameraPosition) {
+                        CameraPosition.FRONT -> it.requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+                        CameraPosition.BACK -> it.requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                    }
+                }
                 .build()
 
             preview.setSurfaceProvider(previewView.surfaceProvider)
