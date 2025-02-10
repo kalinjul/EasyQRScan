@@ -15,7 +15,7 @@ import platform.AVFoundation.AVMetadataObjectTypeUPCECode
 
 fun List<CodeType>.toFormat(): List<platform.AVFoundation.AVMetadataObjectType> = map {
     when(it) {
-        CodeType.Codabar -> AVMetadataObjectTypeCodabarCode
+        CodeType.Codabar -> if (iosVersionIsMin(15,4)) { AVMetadataObjectTypeCodabarCode } else error("AVMetadataObjectTypeCodabarCode not available on iOS ${iosVersion()}")
         CodeType.Code39 -> AVMetadataObjectTypeCode39Code
         CodeType.Code93 -> AVMetadataObjectTypeCode93Code
         CodeType.Code128 -> AVMetadataObjectTypeCode128Code
