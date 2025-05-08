@@ -83,7 +83,9 @@ if (projectHasSignatureProperties()) {
 }
 
 mavenPublishing {
-    signAllPublications()
+    if (projectHasSignatureProperties()) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "library", version.toString())
 
