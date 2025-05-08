@@ -1,40 +1,58 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.publicvalue.convention.config.configureIosTargets
 
 plugins {
-    id("org.publicvalue.convention.android.library")
-    id("org.publicvalue.convention.kotlin.multiplatform.mobile")
-    id("org.publicvalue.convention.compose.multiplatform")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kmp)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.compose.compiler)
 }
 
 kotlin {
-    configureIosTargets()
+    applyDefaultHierarchyTemplate()
+
+    androidTarget {
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+    }
+
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "shared"
+            isStatic = true
+        }
+    }
+
+
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
-
                 implementation(projects.scanner)
             }
         }
-        val androidMain by getting {
-            dependencies {
-//                api(libs.androidx.activity.compose)
-//                api(libs.androidx.core.ktx)
-            }
+
+        val iosMain by getting {
+            dependsOn(commonMain)
         }
+
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
-        val iosMain by getting {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
-        }
+
+        iosX64Main.dependsOn(iosMain)
+        iosArm64Main.dependsOn(iosMain)
+        iosSimulatorArm64Main.dependsOn(iosMain)
     }
 
     targets.withType<KotlinNativeTarget>().configureEach {
@@ -48,4 +66,12 @@ kotlin {
 
 android {
     namespace = "org.publicvalue.multiplatform.qrcode.sample.shared"
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
+    defaultConfig {
+        minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 }

@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.kmp) apply false
     alias(libs.plugins.dokka)
     alias(libs.plugins.nexusPublish)
+    alias(libs.plugins.vanniktech.mavenPublish) apply false
 }
 
 subprojects {
