@@ -87,7 +87,7 @@ mavenPublishing {
         signAllPublications()
     }
 
-    coordinates(group.toString(), "library", version.toString())
+    coordinates(group as String, project.name, project.version as String)
 
     configure(
         KotlinMultiplatform(
