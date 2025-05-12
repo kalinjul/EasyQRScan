@@ -1,15 +1,13 @@
 package org.publicvalue.convention.config
 
-import org.gradle.api.JavaVersion
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.publicvalue.convention.libs
 
 fun KotlinMultiplatformExtension.configureAndroidTarget() {
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = JavaVersion.toVersion(project.libs.versions.jvmTarget.get()).toString()
-            }
+        compilerOptions {
+            jvmTarget.set(JvmTarget.fromTarget(project.libs.versions.jvmTarget.get()))
         }
     }
 }
