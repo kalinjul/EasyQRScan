@@ -54,7 +54,7 @@ class IosMutableCameraPermissionState: MutableCameraPermissionState() {
     override fun goToSettings() {
         val appSettingsUrl = NSURL(string = UIApplicationOpenSettingsURLString)
         if (UIApplication.sharedApplication.canOpenURL(appSettingsUrl)) {
-            UIApplication.sharedApplication.openURL(appSettingsUrl)
+            UIApplication.sharedApplication.openURL(appSettingsUrl, emptyMap<Any?, Any>()) {}
         }
     }
 }
