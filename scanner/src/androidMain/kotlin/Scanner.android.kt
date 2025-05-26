@@ -20,11 +20,12 @@ actual fun Scanner(
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
     cameraPosition: CameraPosition,
+    defaultOrientation: CameraOrientation?
 ) {
     val analyzer = remember() {
         BarcodeAnalyzer(types.toFormat(), onScanned)
     }
-    CameraView(modifier, analyzer, cameraPosition)
+    CameraView(modifier, analyzer, cameraPosition, defaultOrientation)
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
