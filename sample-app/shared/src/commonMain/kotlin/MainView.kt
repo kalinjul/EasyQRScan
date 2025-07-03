@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.publicvalue.multiplatform.qrcode.CameraOrientation
 import org.publicvalue.multiplatform.qrcode.CameraPosition
 import org.publicvalue.multiplatform.qrcode.CodeType
 import org.publicvalue.multiplatform.qrcode.ScannerWithPermissions
@@ -34,10 +35,16 @@ fun MainView() {
         Column(modifier = Modifier.padding(it)) {
             Text("Scan QR-Code below")
             var scannerVisible by remember {mutableStateOf(false)}
+            var cameraPosition by remember { mutableStateOf( CameraPosition.BACK)}
             Button(onClick = {
                 scannerVisible = !scannerVisible
             }) {
                 Text("Toggle scanner (visible: $scannerVisible)")
+            }
+            Button(onClick = {
+                cameraPosition = if(cameraPosition== CameraPosition.BACK) CameraPosition.FRONT else CameraPosition.BACK
+            }) {
+                Text("Toggle camera (position: $cameraPosition)")
             }
             if (scannerVisible) {
                 val scope = rememberCoroutineScope()
@@ -50,7 +57,8 @@ fun MainView() {
                         false // continue scanning
                     },
                     types = listOf(CodeType.QR),
-                    cameraPosition = CameraPosition.BACK
+                    cameraPosition = cameraPosition,
+                    defaultOrientation = CameraOrientation.LANDSCAPE
                 )
             }
         }
