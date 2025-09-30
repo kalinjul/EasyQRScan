@@ -29,9 +29,7 @@ class BarcodeAnalyzer(
             ).addOnSuccessListener { barcode ->
                 barcode?.takeIf { it.isNotEmpty() }
                     ?.mapNotNull { it.rawValue }
-                    ?.joinToString(",")
-                    ?.let {
-//                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    ?.forEach {
                         if (onScanned(it)) {
                             scanner.close()
                         }

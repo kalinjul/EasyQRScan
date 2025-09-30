@@ -11,7 +11,7 @@ plugins {
 kotlin {
     configureIosTargets()
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
@@ -20,20 +20,9 @@ kotlin {
                 implementation(projects.scanner)
             }
         }
-        val androidMain by getting {
+        androidMain {
             dependencies {
-//                api(libs.androidx.activity.compose)
-//                api(libs.androidx.core.ktx)
             }
-        }
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val iosMain by getting {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
         }
     }
 

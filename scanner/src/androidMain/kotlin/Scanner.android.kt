@@ -50,7 +50,7 @@ class AccompanistPermissionWrapper (val accPermissionState: PermissionState, pri
     override fun goToSettings() {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
         intent.data = Uri.parse("package:" + context.packageName)
-        ContextCompat.startActivity(context, intent, null)
+        context.startActivity(intent, null)
     }
 }
 
