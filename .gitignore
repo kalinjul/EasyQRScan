@@ -3,3 +3,4 @@ build/
 .gradle
 UserInterfaceState.xcuserstate
 .kotlin
+/local.properties
