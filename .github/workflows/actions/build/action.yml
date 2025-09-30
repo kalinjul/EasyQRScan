@@ -13,4 +13,4 @@ runs:
       run: ./gradlew -p sample-app assembleRelease
     - name: Build dokka
       shell: bash
-      run: ./gradlew dokkaHtmlCollector
+      run: ./gradlew dokkaGeneratePublicationHtml
