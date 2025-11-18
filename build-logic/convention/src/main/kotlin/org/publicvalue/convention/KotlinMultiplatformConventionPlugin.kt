@@ -2,7 +2,7 @@ package org.publicvalue.convention
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.configurationcache.extensions.capitalized
+import org.gradle.internal.extensions.stdlib.capitalized
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
@@ -42,7 +42,9 @@ private fun Project.addKspDependencyForAllTargets(
             }
             .forEach { target ->
                 add(
-                    "ksp${target.targetName.capitalized()}$configurationNameSuffix",
+                    "ksp${
+                        target.targetName.capitalized()
+                    }$configurationNameSuffix",
                     dependencyNotation,
                 )
             }
