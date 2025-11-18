@@ -20,7 +20,8 @@ actual fun Scanner(
     modifier: Modifier,
     onScanned: (String) -> Boolean, // return true to abort scanning
     types: List<CodeType>,
-    cameraPosition: CameraPosition
+    cameraPosition: CameraPosition,
+    enableTorch: Boolean, // TODO
 ) {
     UiScannerView(
         modifier = modifier,

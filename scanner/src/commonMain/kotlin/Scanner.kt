@@ -24,7 +24,8 @@ expect fun Scanner(
     modifier: Modifier = Modifier,
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
-    cameraPosition: CameraPosition = CameraPosition.BACK
+    cameraPosition: CameraPosition = CameraPosition.BACK,
+    enableTorch: Boolean,
 )
 
 /**
@@ -43,6 +44,7 @@ fun ScannerWithPermissions(
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
     cameraPosition: CameraPosition = CameraPosition.BACK,
+    enableTorch: Boolean,
     permissionText: String = "Camera is required for QR Code scanning",
     openSettingsLabel: String = "Open Settings",
 ) {
@@ -51,6 +53,7 @@ fun ScannerWithPermissions(
         onScanned = onScanned,
         types = types,
         cameraPosition = cameraPosition,
+        enableTorch = enableTorch,
         permissionDeniedContent = { permissionState ->
             Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -80,6 +83,7 @@ fun ScannerWithPermissions(
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
     cameraPosition: CameraPosition,
+    enableTorch: Boolean,
     permissionDeniedContent: @Composable (CameraPermissionState) -> Unit,
 ) {
     val permissionState = rememberCameraPermissionState()
@@ -91,7 +95,7 @@ fun ScannerWithPermissions(
     }
 
     if (permissionState.status == CameraPermissionStatus.Granted) {
-        Scanner(modifier, types = types, onScanned = onScanned, cameraPosition = cameraPosition)
+        Scanner(modifier, types = types, onScanned = onScanned, cameraPosition = cameraPosition, enableTorch = enableTorch)
     } else {
         permissionDeniedContent(permissionState)
     }

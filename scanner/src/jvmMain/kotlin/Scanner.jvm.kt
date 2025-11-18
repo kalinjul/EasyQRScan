@@ -9,7 +9,8 @@ actual fun Scanner(
     modifier: Modifier,
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
-    cameraPosition: CameraPosition
+    cameraPosition: CameraPosition,
+    enableTorch: Boolean,
 ) {
     Text("Scanner not implemented for JVM")
 }

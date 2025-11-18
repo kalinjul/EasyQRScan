@@ -20,6 +20,7 @@ dependencyResolutionManagement {
 rootProject.name="EasyQRScan"
 
 include(":scanner")
+include(":camerautils")
 include(":sample-app:shared")
 include(":sample-app:android-app")
 
