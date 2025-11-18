@@ -8,11 +8,11 @@ jvmTarget = "17"
 agp = "8.11.1"
 
 #https://github.com/JetBrains/compose-multiplatform
-compose-multiplatform = "1.9.0"
+compose-multiplatform = "1.9.3"
 #https://kotlinlang.org/docs/multiplatform-compatibility-guide.html
-kotlin = "2.2.20"
+kotlin = "2.2.21"
 # https://github.com/google/ksp
-ksp = "2.2.20-2.0.3"
+ksp = "2.3.0"
 
 #https://mvnrepository.com/artifact/org.jetbrains.compose.compiler/compiler
 #composeCompiler = "1.5.8.1"
@@ -26,7 +26,7 @@ coreKtx = "1.17.0"
 dokka = "2.0.0"
 nexus-publish-plugin = "2.0.0"
 accompanist = "0.37.3"
-androidxCamera = "1.4.2"
+androidxCamera = "1.5.1"
 mlkit = "17.3.0"
 
 [libraries]
