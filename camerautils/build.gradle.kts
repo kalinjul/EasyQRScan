@@ -7,7 +7,7 @@ plugins {
     id("org.publicvalue.convention.compose.multiplatform")
 }
 
-description = "Compose Multiplatform QR Code Scanner for Android/iOS"
+description = "Compose Multiplatform Camera Utilities for Android/iOS"
 
 kotlin {
     configureIosTargets()
@@ -18,18 +18,12 @@ kotlin {
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
-                implementation(compose.material3)
-                api(projects.camerautils)
             }
         }
 
         androidMain {
             dependencies {
-                implementation(libs.accompanist.permissions)
                 implementation(libs.androidx.camera.camera2)
-                implementation(libs.androidx.camera.lifecycle)
-                implementation(libs.androidx.camera.view)
-                implementation(libs.mlkit.barcode.scanning)
             }
         }
 
