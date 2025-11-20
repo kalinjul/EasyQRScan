@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy-release:
-    runs-on: macos-13
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4
