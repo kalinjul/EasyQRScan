@@ -15,24 +15,23 @@ Supported Compose version:
 | 1.6.x           | 0.1.0+             |
 | 1.7             | 0.2 - 0.3          |
 | 1.8             | 0.4.0              |
-| 1.9             | 0.5.0              |
+| 1.9             | 0.5.0 - 0.6.x      |
 
 # Dependency
 Add the dependency to your commonMain sourceSet (KMP) / Android dependencies (android only):
 ```kotlin
-implementation("io.github.kalinjul.easyqrscan:scanner:0.5.0")
+implementation("io.github.kalinjul.easyqrscan:scanner:0.6.0")
 ```
 
 Or, for your libs.versions.toml:
 ```toml
 [versions]
-easyqrscan = "0.5.0"
+easyqrscan = "0.6.0"
 [libraries]
 easyqrscan = { module = "io.github.kalinjul.easyqrscan:scanner", version.ref = "easyqrscan" }
 ```
 
-# Usage
-## Camera Permissions
+# Setup Camera Permissions
 Include this at root level in your AndroidManifest.xml:
 ```xml
 <uses-feature android:name="android.hardware.camera"/>
@@ -43,10 +42,18 @@ Include this at root level in your AndroidManifest.xml:
 Add this key to the Info.plist in your xcode project:
 ```NSCameraUsageDescription``` and provide a description as value
 
-## Compose UI
+# Usage
+
+The scanner is included by calling a single composable function ```Scanner()``` or ```ScannerWithPermissions```:
+
 ```kotlin
 // basic permission handling included:
-ScannerWithPermissions(onScanned = { println(it); true }, types = listOf(CodeType.QR))
+ScannerWithPermissions(
+    onScanned = { println(it); true }, // return true to disable the scanner, false to continue scanning
+    types = listOf(CodeType.QR),
+    cameraPosition = CameraPosition.BACK,
+    enableTorch = false // toggle this to enable/disable the flashlight
+)
 
 // or, if you handle permissions yourself:
 Scanner(onScanned = { println(it); true }, types = listOf(CodeType.QR))
