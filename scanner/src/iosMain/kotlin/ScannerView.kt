@@ -15,15 +15,12 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVCaptureDeviceInput
-import platform.AVFoundation.AVCaptureDevicePositionBack
-import platform.AVFoundation.AVCaptureDevicePositionFront
 import platform.AVFoundation.AVCaptureMetadataOutput
 import platform.AVFoundation.AVCaptureMetadataOutputObjectsDelegateProtocol
 import platform.AVFoundation.AVCaptureSession
@@ -33,10 +30,8 @@ import platform.AVFoundation.AVCaptureVideoOrientationPortrait
 import platform.AVFoundation.AVCaptureVideoOrientationPortraitUpsideDown
 import platform.AVFoundation.AVCaptureVideoPreviewLayer
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
-import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
-import platform.AVFoundation.position
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
@@ -55,12 +50,14 @@ fun UiScannerView(
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
     allowedMetadataTypes: List<AVMetadataObjectType>,
     cameraPosition: CameraPosition,
-    onScanned: (String) -> Boolean
+    onScanned: (String) -> Boolean,
+    onStarted: () -> Unit,
 ) {
     val coordinator = remember {
         ScannerCameraCoordinator(
             onScanned = onScanned,
-            cameraPosition = cameraPosition
+            cameraPosition = cameraPosition,
+            onStarted = onStarted
         )
     }
 
@@ -73,6 +70,8 @@ fun UiScannerView(
 
         onDispose {
             listener.unregister()
+            // stop capture
+            coordinator.captureSession.stopRunning()
         }
     }
 
@@ -80,7 +79,6 @@ fun UiScannerView(
         modifier = modifier.fillMaxSize(),
         factory = {
             val previewContainer = ScannerPreviewView(coordinator)
-            println("Calling prepare")
             coordinator.prepare(previewContainer.layer, allowedMetadataTypes)
             previewContainer
         },
@@ -89,14 +87,6 @@ fun UiScannerView(
             isNativeAccessibilityEnabled = true,
         )
     )
-
-//    DisposableEffect(Unit) {
-//        onDispose {
-//            // stop capture
-//            coordinator.
-//        }
-//    }
-
 }
 
 @OptIn(ExperimentalForeignApi::class)
@@ -116,6 +106,7 @@ class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIV
 @OptIn(ExperimentalForeignApi::class)
 class ScannerCameraCoordinator(
     val onScanned: (String) -> Boolean,
+    val onStarted: () -> Unit,
     val cameraPosition: CameraPosition
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
@@ -125,24 +116,13 @@ class ScannerCameraCoordinator(
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     fun prepare(layer: CALayer, allowedMetadataTypes: List<AVMetadataObjectType>) {
         captureSession = AVCaptureSession()
-        val devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo).map { it as AVCaptureDevice }
-
-        val device = devices.firstOrNull { device ->
-            when(cameraPosition) {
-                CameraPosition.FRONT -> device.position == AVCaptureDevicePositionFront
-                CameraPosition.BACK -> device.position == AVCaptureDevicePositionBack
-            }
-        } ?: run {
-            println("Could not find camera with position: $cameraPosition, using default camera")
-            AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
-        }
+        val device = AVCaptureDevice.getDevice(cameraPosition)
 
         if (device == null) {
             println("Device has no camera")
             return
         }
 
-        println("Initializing video input")
         val videoInput = memScoped {
             val error: ObjCObjectVar<NSError?> = alloc<ObjCObjectVar<NSError?>>()
             val videoInput = AVCaptureDeviceInput(device = device, error = error.ptr)
@@ -154,7 +134,6 @@ class ScannerCameraCoordinator(
             }
         }
 
-        println("Adding video input")
         if (videoInput != null && captureSession.canAddInput(videoInput)) {
             captureSession.addInput(videoInput)
         } else {
@@ -164,7 +143,6 @@ class ScannerCameraCoordinator(
 
         val metadataOutput = AVCaptureMetadataOutput()
 
-        println("Adding metadata output")
         if (captureSession.canAddOutput(metadataOutput)) {
             captureSession.addOutput(metadataOutput)
 
@@ -174,26 +152,16 @@ class ScannerCameraCoordinator(
             println("Could not add output")
             return
         }
-        println("Adding preview layer")
         previewLayer = AVCaptureVideoPreviewLayer(session = captureSession).also {
             it.frame = layer.bounds
             it.videoGravity = AVLayerVideoGravityResizeAspectFill
-            println("Set orientation")
             setCurrentOrientation(newOrientation = UIDevice.currentDevice.orientation)
-            println("Adding sublayer")
-            layer.bounds.useContents {
-                println("Bounds: ${this.size.width}x${this.size.height}")
-
-            }
-            layer.frame.useContents {
-                println("Frame: ${this.size.width}x${this.size.height}")
-            }
             layer.addSublayer(it)
         }
 
-        println("Launching capture session")
         GlobalScope.launch(Dispatchers.Default) {
             captureSession.startRunning()
+            onStarted()
         }
     }
 

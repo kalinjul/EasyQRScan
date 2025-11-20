@@ -4,6 +4,13 @@ import androidx.compose.runtime.Composable
 
 @Composable
 actual fun rememberCameraUtils(): CameraUtils {
-    println("CameraUtils not implemented on JVM")
-    return object : CameraUtils {}
+    return object : CameraUtils {
+        override fun setTorchMode(
+            cameraPosition: CameraPosition,
+            value: Boolean
+        ): Boolean {
+            println("CameraUtils not implemented on JVM")
+            return false
+        }
+    }
 }

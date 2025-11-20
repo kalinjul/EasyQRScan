@@ -67,7 +67,7 @@ fun MainView() {
                         checked = enableTorch,
                         onCheckedChange = {
                             enableTorch = it
-                            if (!scannerVisible) {
+                            if (!scannerVisible) { // android needs separate handling when capturing video
                                 cameraUtils.setTorchMode(CameraPosition.BACK, it)
                             }
                         }

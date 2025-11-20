@@ -1,6 +1,8 @@
 package org.publicvalue.multiplatform.qrcode
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,15 +23,31 @@ actual fun Scanner(
     onScanned: (String) -> Boolean, // return true to abort scanning
     types: List<CodeType>,
     cameraPosition: CameraPosition,
-    enableTorch: Boolean, // TODO
+    enableTorch: Boolean,
 ) {
+    var started by remember { mutableStateOf(false) }
+    val cameraUtils = rememberCameraUtils()
+    LaunchedEffect(enableTorch, started) {
+        if (started) {
+            cameraUtils.setTorchMode(cameraPosition, enableTorch)
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraUtils.setTorchMode(cameraPosition, false)
+        }
+    }
     UiScannerView(
         modifier = modifier,
         onScanned = {
             onScanned(it)
         },
         allowedMetadataTypes = types.toFormat(),
-        cameraPosition = cameraPosition
+        cameraPosition = cameraPosition,
+        onStarted = {
+            cameraUtils.setTorchMode(cameraPosition, enableTorch)
+            started = true
+        }
     )
 }
 
