@@ -197,7 +197,6 @@ class ScannerCameraCoordinator(
         }
     }
 
-
     fun setCurrentOrientation(newOrientation: UIDeviceOrientation) {
         when(newOrientation) {
             UIDeviceOrientation.UIDeviceOrientationLandscapeLeft ->
@@ -219,11 +218,9 @@ class ScannerCameraCoordinator(
     }
 
     fun onFound(code: String) {
-        captureSession.stopRunning()
-        if (!onScanned(code)) {
-            GlobalScope.launch(Dispatchers.Default) {
-                captureSession.startRunning()
-            }
+        val stopScanning = onScanned(code)
+        if (stopScanning) {
+            captureSession.stopRunning()
         }
     }
 
