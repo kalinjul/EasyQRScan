@@ -155,7 +155,6 @@ class ScannerCameraCoordinator(
         previewLayer = AVCaptureVideoPreviewLayer(session = captureSession).also {
             it.frame = layer.bounds
             it.videoGravity = AVLayerVideoGravityResizeAspectFill
-            setCurrentOrientation(newOrientation = UIDevice.currentDevice.orientation)
             layer.addSublayer(it)
         }
 
@@ -194,5 +193,7 @@ class ScannerCameraCoordinator(
 
     fun setFrame(rect: CValue<CGRect>) {
         previewLayer?.setFrame(rect)
+
+        setCurrentOrientation(newOrientation = UIDevice.currentDevice.orientation)
     }
 }
