@@ -45,6 +45,7 @@ import platform.darwin.NSObject
 import platform.darwin.dispatch_get_main_queue
 
 @Composable
+@OptIn(ExperimentalForeignApi::class)
 fun UiScannerView(
     modifier: Modifier = Modifier,
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
@@ -97,8 +98,7 @@ class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIV
         CATransaction.begin()
         CATransaction.setValue(true, kCATransactionDisableActions)
 
-        layer.setFrame(frame)
-        coordinator.setFrame(frame)
+        coordinator.setFrame(bounds)
         CATransaction.commit()
     }
 }
