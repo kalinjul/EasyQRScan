@@ -21,11 +21,12 @@ actual fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    cameraZoomState: CameraZoomState?,
 ) {
     val analyzer = remember() {
         BarcodeAnalyzer(types.toFormat(), onScanned)
     }
-    CameraView(modifier, analyzer, cameraPosition, enableTorch)
+    CameraView(modifier, analyzer, cameraPosition, enableTorch, cameraZoomState)
 }
 
 @OptIn(ExperimentalPermissionsApi::class)

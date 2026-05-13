@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
  * @param onScanned Called when a code was scanned. The given lambda should return true
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
+ * @param cameraZoomState Optional optical zoom state; use [rememberCameraZoomState].
  */
 @Composable
 expect fun Scanner(
@@ -26,6 +27,7 @@ expect fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition = CameraPosition.BACK,
     enableTorch: Boolean,
+    cameraZoomState: CameraZoomState? = null,
 )
 
 /**
@@ -37,6 +39,7 @@ expect fun Scanner(
  *                  Return false if scanning should continue.
  * @param permissionText Text to show if permission was denied.
  * @param openSettingsLabel Label to show on the "Go to settings" Button
+ * @param cameraZoomState Optional optical zoom state; use [rememberCameraZoomState].
  */
 @Composable
 fun ScannerWithPermissions(
@@ -45,6 +48,7 @@ fun ScannerWithPermissions(
     types: List<CodeType>,
     cameraPosition: CameraPosition = CameraPosition.BACK,
     enableTorch: Boolean,
+    cameraZoomState: CameraZoomState? = null,
     permissionText: String = "Camera is required for QR Code scanning",
     openSettingsLabel: String = "Open Settings",
 ) {
@@ -54,6 +58,7 @@ fun ScannerWithPermissions(
         types = types,
         cameraPosition = cameraPosition,
         enableTorch = enableTorch,
+        cameraZoomState = cameraZoomState,
         permissionDeniedContent = { permissionState ->
             Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -76,6 +81,7 @@ fun ScannerWithPermissions(
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
  * @param permissionDeniedContent Content to show if permission was denied.
+ * @param cameraZoomState Optional optical zoom state; use [rememberCameraZoomState].
  */
 @Composable
 fun ScannerWithPermissions(
@@ -84,6 +90,7 @@ fun ScannerWithPermissions(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    cameraZoomState: CameraZoomState? = null,
     permissionDeniedContent: @Composable (CameraPermissionState) -> Unit,
 ) {
     val permissionState = rememberCameraPermissionState()
@@ -95,7 +102,14 @@ fun ScannerWithPermissions(
     }
 
     if (permissionState.status == CameraPermissionStatus.Granted) {
-        Scanner(modifier, types = types, onScanned = onScanned, cameraPosition = cameraPosition, enableTorch = enableTorch)
+        Scanner(
+            modifier,
+            types = types,
+            onScanned = onScanned,
+            cameraPosition = cameraPosition,
+            enableTorch = enableTorch,
+            cameraZoomState = cameraZoomState,
+        )
     } else {
         permissionDeniedContent(permissionState)
     }

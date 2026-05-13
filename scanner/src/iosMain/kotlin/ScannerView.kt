@@ -3,7 +3,9 @@ package org.publicvalue.multiplatform.qrcode
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
@@ -18,7 +20,9 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVCaptureDeviceInput
 import platform.AVFoundation.AVCaptureMetadataOutput
@@ -32,6 +36,9 @@ import platform.AVFoundation.AVCaptureVideoPreviewLayer
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
+import platform.AVFoundation.maxAvailableVideoZoomFactor
+import platform.AVFoundation.minAvailableVideoZoomFactor
+import platform.AVFoundation.setVideoZoomFactor
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
@@ -51,6 +58,7 @@ fun UiScannerView(
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
     allowedMetadataTypes: List<AVMetadataObjectType>,
     cameraPosition: CameraPosition,
+    cameraZoomState: CameraZoomState?,
     onScanned: (String) -> Boolean,
     onStarted: () -> Unit,
 ) {
@@ -62,6 +70,22 @@ fun UiScannerView(
         )
     }
 
+    DisposableEffect(coordinator, cameraZoomState) {
+        coordinator.bindZoomState(cameraZoomState)
+        onDispose {
+            coordinator.bindZoomState(null)
+        }
+    }
+
+    LaunchedEffect(coordinator, cameraZoomState) {
+        val state = cameraZoomState ?: return@LaunchedEffect
+        snapshotFlow { state.zoomRatio }.collectLatest { ratio ->
+            withContext(Dispatchers.Main) {
+                coordinator.applyZoomRatio(ratio)
+            }
+        }
+    }
+
     DisposableEffect(Unit) {
         val listener = OrientationListener { orientation ->
             coordinator.setCurrentOrientation(orientation)
@@ -71,7 +95,7 @@ fun UiScannerView(
 
         onDispose {
             listener.unregister()
-            // stop capture
+            coordinator.bindZoomState(null)
             coordinator.captureSession.stopRunning()
         }
     }
@@ -91,7 +115,7 @@ fun UiScannerView(
 }
 
 @OptIn(ExperimentalForeignApi::class)
-class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIView(frame = cValue { CGRectZero }) {
+class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator) : UIView(frame = cValue { CGRectZero }) {
     @OptIn(ExperimentalForeignApi::class)
     override fun layoutSubviews() {
         super.layoutSubviews()
@@ -108,10 +132,50 @@ class ScannerCameraCoordinator(
     val onScanned: (String) -> Boolean,
     val onStarted: () -> Unit,
     val cameraPosition: CameraPosition
-): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
+) : AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
     private var previewLayer: AVCaptureVideoPreviewLayer? = null
     lateinit var captureSession: AVCaptureSession
+    private var captureDevice: AVCaptureDevice? = null
+    private var boundZoomState: CameraZoomState? = null
+
+    fun bindZoomState(state: CameraZoomState?) {
+        val previous = boundZoomState
+        if (previous != state) {
+            previous?.updateZoomRangeFromPlatform(null)
+        }
+        boundZoomState = state
+        captureDevice?.let { publishDeviceZoomRange(it) }
+    }
+
+    private fun publishDeviceZoomRange(device: AVCaptureDevice) {
+        val holder = boundZoomState ?: return
+        val minF = device.minAvailableVideoZoomFactor.toFloat()
+        val maxF = device.maxAvailableVideoZoomFactor.toFloat()
+        if (maxF >= minF && minF > 0f && maxF.isFinite()) {
+            holder.updateZoomRangeFromPlatform(CameraZoomRange(minZoomRatio = minF, maxZoomRatio = maxF))
+        } else {
+            val maxFmt = device.activeFormat.videoMaxZoomFactor.toFloat().coerceAtLeast(1f)
+            holder.updateZoomRangeFromPlatform(CameraZoomRange(minZoomRatio = 1f, maxZoomRatio = maxFmt))
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+    fun applyZoomRatio(ratio: Float) {
+        val device = captureDevice ?: return
+        val minZ = device.minAvailableVideoZoomFactor
+        val maxZ = device.maxAvailableVideoZoomFactor
+        val clamped = ratio.toDouble().coerceIn(minZ, maxZ)
+        memScoped {
+            val error: ObjCObjectVar<NSError?> = alloc<ObjCObjectVar<NSError?>>()
+            device.lockForConfiguration(error.ptr)
+            try {
+                device.setVideoZoomFactor(clamped)
+            } finally {
+                device.unlockForConfiguration()
+            }
+        }
+    }
 
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     fun prepare(layer: CALayer, allowedMetadataTypes: List<AVMetadataObjectType>) {
@@ -152,11 +216,15 @@ class ScannerCameraCoordinator(
             println("Could not add output")
             return
         }
+        captureDevice = device
+
         previewLayer = AVCaptureVideoPreviewLayer(session = captureSession).also {
             it.frame = layer.bounds
             it.videoGravity = AVLayerVideoGravityResizeAspectFill
             layer.addSublayer(it)
         }
+
+        publishDeviceZoomRange(device)
 
         GlobalScope.launch(Dispatchers.Default) {
             captureSession.startRunning()
@@ -165,7 +233,7 @@ class ScannerCameraCoordinator(
     }
 
     fun setCurrentOrientation(newOrientation: UIDeviceOrientation) {
-        when(newOrientation) {
+        when (newOrientation) {
             UIDeviceOrientation.UIDeviceOrientationLandscapeLeft ->
                 previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeRight
             UIDeviceOrientation.UIDeviceOrientationLandscapeRight ->
@@ -179,7 +247,11 @@ class ScannerCameraCoordinator(
         }
     }
 
-    override fun captureOutput(output: platform.AVFoundation.AVCaptureOutput, didOutputMetadataObjects: List<*>, fromConnection: platform.AVFoundation.AVCaptureConnection) {
+    override fun captureOutput(
+        output: platform.AVFoundation.AVCaptureOutput,
+        didOutputMetadataObjects: List<*>,
+        fromConnection: platform.AVFoundation.AVCaptureConnection
+    ) {
         val metadataObject = didOutputMetadataObjects.firstOrNull() as? AVMetadataMachineReadableCodeObject
         metadataObject?.stringValue?.let { onFound(it) }
     }
