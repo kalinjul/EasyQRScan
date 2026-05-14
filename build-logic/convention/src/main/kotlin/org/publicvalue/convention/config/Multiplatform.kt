@@ -1,16 +1,6 @@
 package org.publicvalue.convention.config
 
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.publicvalue.convention.libs
-
-fun KotlinMultiplatformExtension.configureAndroidTarget() {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.fromTarget(project.libs.versions.jvmTarget.get()))
-        }
-    }
-}
 
 fun KotlinMultiplatformExtension.configureIosTargets(baseName: String? = null) {
     listOf(
