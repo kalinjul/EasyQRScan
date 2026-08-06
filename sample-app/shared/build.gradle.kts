@@ -3,12 +3,16 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.publicvalue.convention.config.configureIosTargets
 
 plugins {
-    id("org.publicvalue.convention.android.library")
     id("org.publicvalue.convention.kotlin.multiplatform.mobile")
+    id("org.publicvalue.convention.android.library")
     id("org.publicvalue.convention.compose.multiplatform")
 }
 
 kotlin {
+    android {
+        namespace = "org.publicvalue.multiplatform.qrcode.sample.shared"
+    }
+
     configureIosTargets()
     sourceSets {
         commonMain {
@@ -33,8 +37,4 @@ kotlin {
 //            export("io.github.kalinjul.kotlin.multiplatform:oidc-appsupport")
         }
     }
-}
-
-android {
-    namespace = "org.publicvalue.multiplatform.qrcode.sample.shared"
 }

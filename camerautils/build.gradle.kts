@@ -1,8 +1,8 @@
 import org.publicvalue.convention.config.configureIosTargets
 
 plugins {
-    id("org.publicvalue.convention.android.library")
     id("org.publicvalue.convention.kotlin.multiplatform.mobile")
+    id("org.publicvalue.convention.android.library")
     id("org.publicvalue.convention.centralPublish")
     id("org.publicvalue.convention.compose.multiplatform")
 }
@@ -10,6 +10,10 @@ plugins {
 description = "Compose Multiplatform Camera Utilities for Android/iOS"
 
 kotlin {
+    android {
+        namespace = "org.publicvalue.multiplatform.easyqrscan.camerautils"
+    }
+
     configureIosTargets()
     jvm()
 
