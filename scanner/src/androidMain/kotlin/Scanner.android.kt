@@ -21,6 +21,7 @@ actual fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    orientation: ScannerOrientation,
 ) {
     val analyzer = remember() {
         BarcodeAnalyzer(types.toFormat(), onScanned)

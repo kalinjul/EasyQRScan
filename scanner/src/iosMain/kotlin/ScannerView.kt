@@ -51,6 +51,7 @@ fun UiScannerView(
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
     allowedMetadataTypes: List<AVMetadataObjectType>,
     cameraPosition: CameraPosition,
+    orientation: ScannerOrientation,
     onScanned: (String) -> Boolean,
     onStarted: () -> Unit,
 ) {
@@ -58,19 +59,22 @@ fun UiScannerView(
         ScannerCameraCoordinator(
             onScanned = onScanned,
             cameraPosition = cameraPosition,
+            orientation = orientation,
             onStarted = onStarted
         )
     }
 
-    DisposableEffect(Unit) {
-        val listener = OrientationListener { orientation ->
-            coordinator.setCurrentOrientation(orientation)
+    DisposableEffect(orientation) {
+        val listener = if (orientation == ScannerOrientation.Device) {
+            OrientationListener { deviceOrientation ->
+                coordinator.setCurrentOrientation(deviceOrientation)
+            }.also { it.register() }
+        } else {
+            null
         }
 
-        listener.register()
-
         onDispose {
-            listener.unregister()
+            listener?.unregister()
             // stop capture
             coordinator.captureSession.stopRunning()
         }
@@ -107,7 +111,8 @@ class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIV
 class ScannerCameraCoordinator(
     val onScanned: (String) -> Boolean,
     val onStarted: () -> Unit,
-    val cameraPosition: CameraPosition
+    val cameraPosition: CameraPosition,
+    val orientation: ScannerOrientation,
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
     private var previewLayer: AVCaptureVideoPreviewLayer? = null
@@ -165,17 +170,27 @@ class ScannerCameraCoordinator(
     }
 
     fun setCurrentOrientation(newOrientation: UIDeviceOrientation) {
-        when(newOrientation) {
-            UIDeviceOrientation.UIDeviceOrientationLandscapeLeft ->
-                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeRight
-            UIDeviceOrientation.UIDeviceOrientationLandscapeRight ->
+        when (orientation) {
+            ScannerOrientation.Device -> when(newOrientation) {
+                UIDeviceOrientation.UIDeviceOrientationLandscapeLeft ->
+                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeRight
+                UIDeviceOrientation.UIDeviceOrientationLandscapeRight ->
+                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeLeft
+                UIDeviceOrientation.UIDeviceOrientationPortrait ->
+                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
+                UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown ->
+                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown
+                else ->
+                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
+            }
+            ScannerOrientation.LandscapeLeft ->
                 previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeLeft
-            UIDeviceOrientation.UIDeviceOrientationPortrait ->
+            ScannerOrientation.LandscapeRight ->
+                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeRight
+            ScannerOrientation.Portrait ->
                 previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
-            UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown ->
+            ScannerOrientation.PortraitUpsideDown ->
                 previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown
-            else ->
-                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
         }
     }
 

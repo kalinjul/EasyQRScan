@@ -24,6 +24,7 @@ actual fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    orientation: ScannerOrientation,
 ) {
     var started by remember { mutableStateOf(false) }
     val cameraUtils = rememberCameraUtils()
@@ -44,6 +45,7 @@ actual fun Scanner(
         },
         allowedMetadataTypes = types.toFormat(),
         cameraPosition = cameraPosition,
+        orientation = orientation,
         onStarted = {
             cameraUtils.setTorchMode(cameraPosition, enableTorch)
             started = true
