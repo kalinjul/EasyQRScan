@@ -60,6 +60,26 @@ ScannerWithPermissions(
 Scanner(onScanned = { println(it); true }, types = listOf(CodeType.QR))
 ```
 
+## Camera zoom (Android / iOS)
+
+Use state-based zoom with [rememberCameraZoomState](scanner/src/commonMain/kotlin/CameraZoomState.kt) and pass it to [Scanner](scanner/src/commonMain/kotlin/Scanner.kt) or [ScannerWithPermissions](scanner/src/commonMain/kotlin/Scanner.kt):
+
+```kotlin
+val cameraZoomState = rememberCameraZoomState()
+ScannerWithPermissions(
+    onScanned = { println(it); false },
+    types = listOf(CodeType.QR),
+    cameraPosition = CameraPosition.BACK,
+    enableTorch = false,
+    cameraZoomState = cameraZoomState,
+)
+val range = cameraZoomState.zoomRange.value // null until the camera is ready
+// e.g. Slider when range != null: valueRange = range.minZoomRatio..range.maxZoomRatio
+cameraZoomState.setZoomRatio(2f)
+```
+
+`zoomRatio` follows the platform camera stack (CameraX zoom ratio on Android; `videoZoomFactor` on iOS). `zoomRange` is null until the session is bound; `setZoomRatio` clamps to the last known range (or only enforces a small positive minimum before the range exists).
+
 Check out the [sample app](./sample-app) included in the repository.
 
 # Code Types

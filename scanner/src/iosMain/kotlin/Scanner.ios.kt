@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import platform.AVFoundation.AVAuthorizationStatusAuthorized
 import platform.AVFoundation.AVCaptureDevice
@@ -24,6 +25,7 @@ actual fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    cameraZoomState: CameraZoomState?,
 ) {
     var started by remember { mutableStateOf(false) }
     val cameraUtils = rememberCameraUtils()
@@ -44,6 +46,7 @@ actual fun Scanner(
         },
         allowedMetadataTypes = types.toFormat(),
         cameraPosition = cameraPosition,
+        cameraZoomState = cameraZoomState,
         onStarted = {
             cameraUtils.setTorchMode(cameraPosition, enableTorch)
             started = true
