@@ -10,6 +10,7 @@ import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
@@ -35,11 +36,19 @@ import platform.AVFoundation.AVMetadataObjectType
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
+import platform.Foundation.NSNotification
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSSelectorFromString
 import platform.QuartzCore.CALayer
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIDevice
-import platform.UIKit.UIDeviceOrientation
+import platform.UIKit.UIDeviceOrientationDidChangeNotification
+import platform.UIKit.UIInterfaceOrientation
+import platform.UIKit.UIInterfaceOrientationLandscapeLeft
+import platform.UIKit.UIInterfaceOrientationLandscapeRight
+import platform.UIKit.UIInterfaceOrientationPortrait
+import platform.UIKit.UIInterfaceOrientationPortraitUpsideDown
 import platform.UIKit.UIView
 import platform.darwin.NSObject
 import platform.darwin.dispatch_get_main_queue
@@ -51,7 +60,6 @@ fun UiScannerView(
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
     allowedMetadataTypes: List<AVMetadataObjectType>,
     cameraPosition: CameraPosition,
-    orientation: ScannerOrientation,
     onScanned: (String) -> Boolean,
     onStarted: () -> Unit,
 ) {
@@ -59,22 +67,12 @@ fun UiScannerView(
         ScannerCameraCoordinator(
             onScanned = onScanned,
             cameraPosition = cameraPosition,
-            orientation = orientation,
             onStarted = onStarted
         )
     }
 
-    DisposableEffect(orientation) {
-        val listener = if (orientation == ScannerOrientation.Device) {
-            OrientationListener { deviceOrientation ->
-                coordinator.setCurrentOrientation(deviceOrientation)
-            }.also { it.register() }
-        } else {
-            null
-        }
-
+    DisposableEffect(Unit) {
         onDispose {
-            listener?.unregister()
             // stop capture
             coordinator.captureSession.stopRunning()
         }
@@ -96,6 +94,9 @@ fun UiScannerView(
 
 @OptIn(ExperimentalForeignApi::class)
 class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIView(frame = cValue { CGRectZero }) {
+
+    private var observingRotation = false
+
     @OptIn(ExperimentalForeignApi::class)
     override fun layoutSubviews() {
         super.layoutSubviews()
@@ -103,7 +104,51 @@ class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIV
         CATransaction.setValue(true, kCATransactionDisableActions)
 
         coordinator.setFrame(bounds)
+        pushInterfaceOrientation()
         CATransaction.commit()
+    }
+
+    /**
+     * layoutSubviews alone does not cover every rotation: a 180° flip leaves the bounds
+     * unchanged. Observe the device notification as an additional trigger - the value we
+     * apply is always taken from the window scene, not from the device.
+     */
+    override fun didMoveToWindow() {
+        super.didMoveToWindow()
+        val shouldObserve = window != null
+        if (shouldObserve == observingRotation) return
+        observingRotation = shouldObserve
+
+        if (shouldObserve) {
+            UIDevice.currentDevice.beginGeneratingDeviceOrientationNotifications()
+            NSNotificationCenter.defaultCenter.addObserver(
+                observer = this,
+                selector = NSSelectorFromString("deviceOrientationDidChange:"),
+                name = UIDeviceOrientationDidChangeNotification,
+                `object` = null
+            )
+            pushInterfaceOrientation()
+        } else {
+            NSNotificationCenter.defaultCenter.removeObserver(
+                observer = this,
+                name = UIDeviceOrientationDidChangeNotification,
+                `object` = null
+            )
+            UIDevice.currentDevice.endGeneratingDeviceOrientationNotifications()
+        }
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    @ObjCAction
+    @OptIn(BetaInteropApi::class)
+    fun deviceOrientationDidChange(notification: NSNotification) {
+        pushInterfaceOrientation()
+    }
+
+    private fun pushInterfaceOrientation() {
+        coordinator.setInterfaceOrientation(
+            window?.windowScene?.interfaceOrientation ?: UIInterfaceOrientationPortrait
+        )
     }
 }
 
@@ -112,11 +157,12 @@ class ScannerCameraCoordinator(
     val onScanned: (String) -> Boolean,
     val onStarted: () -> Unit,
     val cameraPosition: CameraPosition,
-    val orientation: ScannerOrientation,
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
     private var previewLayer: AVCaptureVideoPreviewLayer? = null
     lateinit var captureSession: AVCaptureSession
+
+    private var interfaceOrientation: UIInterfaceOrientation = UIInterfaceOrientationPortrait
 
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     fun prepare(layer: CALayer, allowedMetadataTypes: List<AVMetadataObjectType>) {
@@ -162,6 +208,7 @@ class ScannerCameraCoordinator(
             it.videoGravity = AVLayerVideoGravityResizeAspectFill
             layer.addSublayer(it)
         }
+        applyVideoOrientation()
 
         GlobalScope.launch(Dispatchers.Default) {
             captureSession.startRunning()
@@ -169,28 +216,27 @@ class ScannerCameraCoordinator(
         }
     }
 
-    fun setCurrentOrientation(newOrientation: UIDeviceOrientation) {
-        when (orientation) {
-            ScannerOrientation.Device -> when(newOrientation) {
-                UIDeviceOrientation.UIDeviceOrientationLandscapeLeft ->
-                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeRight
-                UIDeviceOrientation.UIDeviceOrientationLandscapeRight ->
-                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeLeft
-                UIDeviceOrientation.UIDeviceOrientationPortrait ->
-                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
-                UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown ->
-                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown
-                else ->
-                    previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
-            }
-            ScannerOrientation.LandscapeLeft ->
-                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeLeft
-            ScannerOrientation.LandscapeRight ->
-                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationLandscapeRight
-            ScannerOrientation.Portrait ->
-                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortrait
-            ScannerOrientation.PortraitUpsideDown ->
-                previewLayer?.connection?.videoOrientation = AVCaptureVideoOrientationPortraitUpsideDown
+    fun setInterfaceOrientation(newOrientation: UIInterfaceOrientation) {
+        interfaceOrientation = newOrientation
+        applyVideoOrientation()
+    }
+
+    /**
+     * An AVCaptureVideoPreviewLayer is a CALayer and therefore never rotates on its own -
+     * the connection has to be told explicitly. Following the interface orientation means
+     * an app that locks its orientation keeps a fixed preview automatically.
+     */
+    private fun applyVideoOrientation() {
+        val connection = previewLayer?.connection ?: return
+        val videoOrientation = when (interfaceOrientation) {
+            UIInterfaceOrientationLandscapeLeft -> AVCaptureVideoOrientationLandscapeLeft
+            UIInterfaceOrientationLandscapeRight -> AVCaptureVideoOrientationLandscapeRight
+            UIInterfaceOrientationPortraitUpsideDown -> AVCaptureVideoOrientationPortraitUpsideDown
+            else -> AVCaptureVideoOrientationPortrait
+        }
+
+        if (connection.videoOrientation != videoOrientation) {
+            connection.videoOrientation = videoOrientation
         }
     }
 
@@ -208,7 +254,5 @@ class ScannerCameraCoordinator(
 
     fun setFrame(rect: CValue<CGRect>) {
         previewLayer?.setFrame(rect)
-
-        setCurrentOrientation(newOrientation = UIDevice.currentDevice.orientation)
     }
 }

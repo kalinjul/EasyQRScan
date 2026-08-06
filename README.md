@@ -60,18 +60,8 @@ ScannerWithPermissions(
 Scanner(onScanned = { println(it); true }, types = listOf(CodeType.QR))
 ```
 
-The scanner follows physical device rotation by default. For an app with a locked
-interface orientation, pass a fixed `ScannerOrientation` to keep the camera preview
-from rotating with the device:
-
-```kotlin
-ScannerWithPermissions(
-    onScanned = { println(it); true },
-    types = listOf(CodeType.QR),
-    enableTorch = false,
-    orientation = ScannerOrientation.LandscapeRight,
-)
-```
+The camera preview follows your app's interface orientation, so an app that locks its
+orientation gets a fixed preview without any extra configuration.
 
 Check out the [sample app](./sample-app) included in the repository.
 

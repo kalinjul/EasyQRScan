@@ -25,11 +25,10 @@ import kotlinx.coroutines.launch
 import org.publicvalue.multiplatform.qrcode.CameraPosition
 import org.publicvalue.multiplatform.qrcode.CodeType
 import org.publicvalue.multiplatform.qrcode.ScannerWithPermissions
+import org.publicvalue.multiplatform.qrcode.rememberCameraUtils
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeMark
 import kotlin.time.TimeSource
-import org.publicvalue.multiplatform.qrcode.rememberCameraUtils
 
 @Composable
 fun MainView() {

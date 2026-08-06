@@ -18,8 +18,6 @@ import androidx.compose.ui.unit.dp
  * @param onScanned Called when a code was scanned. The given lambda should return true
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
- * @param orientation Orientation used by the camera preview. `Device` follows physical
- *                    device rotation; the other values keep the preview fixed.
  */
 @Composable
 expect fun Scanner(
@@ -28,7 +26,6 @@ expect fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition = CameraPosition.BACK,
     enableTorch: Boolean,
-    orientation: ScannerOrientation = ScannerOrientation.Device,
 )
 
 /**
@@ -40,7 +37,6 @@ expect fun Scanner(
  *                  Return false if scanning should continue.
  * @param permissionText Text to show if permission was denied.
  * @param openSettingsLabel Label to show on the "Go to settings" Button
- * @param orientation Orientation used by the camera preview.
  */
 @Composable
 fun ScannerWithPermissions(
@@ -51,7 +47,6 @@ fun ScannerWithPermissions(
     enableTorch: Boolean,
     permissionText: String = "Camera is required for QR Code scanning",
     openSettingsLabel: String = "Open Settings",
-    orientation: ScannerOrientation = ScannerOrientation.Device,
 ) {
     ScannerWithPermissions(
         modifier = modifier.clipToBounds(),
@@ -59,7 +54,6 @@ fun ScannerWithPermissions(
         types = types,
         cameraPosition = cameraPosition,
         enableTorch = enableTorch,
-        orientation = orientation,
         permissionDeniedContent = { permissionState ->
             Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -82,7 +76,6 @@ fun ScannerWithPermissions(
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
  * @param permissionDeniedContent Content to show if permission was denied.
- * @param orientation Orientation used by the camera preview.
  */
 @Composable
 fun ScannerWithPermissions(
@@ -91,7 +84,6 @@ fun ScannerWithPermissions(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
-    orientation: ScannerOrientation = ScannerOrientation.Device,
     permissionDeniedContent: @Composable (CameraPermissionState) -> Unit,
 ) {
     val permissionState = rememberCameraPermissionState()
@@ -109,7 +101,6 @@ fun ScannerWithPermissions(
             onScanned = onScanned,
             cameraPosition = cameraPosition,
             enableTorch = enableTorch,
-            orientation = orientation,
         )
     } else {
         permissionDeniedContent(permissionState)
