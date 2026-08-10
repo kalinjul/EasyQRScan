@@ -95,7 +95,13 @@ fun ScannerWithPermissions(
     }
 
     if (permissionState.status == CameraPermissionStatus.Granted) {
-        Scanner(modifier, types = types, onScanned = onScanned, cameraPosition = cameraPosition, enableTorch = enableTorch)
+        Scanner(
+            modifier,
+            types = types,
+            onScanned = onScanned,
+            cameraPosition = cameraPosition,
+            enableTorch = enableTorch,
+        )
     } else {
         permissionDeniedContent(permissionState)
     }

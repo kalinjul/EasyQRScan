@@ -60,6 +60,9 @@ ScannerWithPermissions(
 Scanner(onScanned = { println(it); true }, types = listOf(CodeType.QR))
 ```
 
+The camera preview follows your app's interface orientation, so an app that locks its
+orientation gets a fixed preview without any extra configuration.
+
 Check out the [sample app](./sample-app) included in the repository.
 
 # Code Types
