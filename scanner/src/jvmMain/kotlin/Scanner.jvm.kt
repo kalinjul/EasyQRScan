@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 @Composable
 actual fun Scanner(
     modifier: Modifier,
-    onScanned: (String) -> Boolean,
+    onScanned: (String, CodeType) -> Boolean,
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,

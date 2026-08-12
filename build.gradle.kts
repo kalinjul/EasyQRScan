@@ -13,7 +13,8 @@ plugins {
 }
 
 subprojects {
-    group = "io.github.kalinjul.easyqrscan"
+    group = "momap.driver.easyqrscan"
+    version = "0.7.0-local"
 }
 
 nexusPublishing {

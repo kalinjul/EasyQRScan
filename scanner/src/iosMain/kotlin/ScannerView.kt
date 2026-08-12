@@ -60,7 +60,7 @@ fun UiScannerView(
     // https://developer.apple.com/documentation/avfoundation/avmetadataobjecttype?language=objc
     allowedMetadataTypes: List<AVMetadataObjectType>,
     cameraPosition: CameraPosition,
-    onScanned: (String) -> Boolean,
+    onScanned: (String, CodeType) -> Boolean,
     onStarted: () -> Unit,
 ) {
     val coordinator = remember {
@@ -154,7 +154,7 @@ class ScannerPreviewView(private val coordinator: ScannerCameraCoordinator): UIV
 
 @OptIn(ExperimentalForeignApi::class)
 class ScannerCameraCoordinator(
-    val onScanned: (String) -> Boolean,
+    val onScanned: (String, CodeType) -> Boolean,
     val onStarted: () -> Unit,
     val cameraPosition: CameraPosition,
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
@@ -242,11 +242,13 @@ class ScannerCameraCoordinator(
 
     override fun captureOutput(output: platform.AVFoundation.AVCaptureOutput, didOutputMetadataObjects: List<*>, fromConnection: platform.AVFoundation.AVCaptureConnection) {
         val metadataObject = didOutputMetadataObjects.firstOrNull() as? AVMetadataMachineReadableCodeObject
-        metadataObject?.stringValue?.let { onFound(it) }
+        val code = metadataObject?.stringValue ?: return
+        val codeType = metadataObject.type.toCodeType() ?: return
+        onFound(code, codeType)
     }
 
-    fun onFound(code: String) {
-        val stopScanning = onScanned(code)
+    fun onFound(code: String, codeType: CodeType) {
+        val stopScanning = onScanned(code, codeType)
         if (stopScanning) {
             captureSession.stopRunning()
         }

@@ -10,7 +10,7 @@ import com.google.mlkit.vision.common.InputImage
 
 class BarcodeAnalyzer(
     formats: Int = Barcode.FORMAT_QR_CODE,
-    private val onScanned: (String) -> Boolean
+    private val onScanned: (String, CodeType) -> Boolean
 ) : ImageAnalysis.Analyzer {
 
     private val options = BarcodeScannerOptions.Builder()
@@ -28,9 +28,13 @@ class BarcodeAnalyzer(
                 )
             ).addOnSuccessListener { barcode ->
                 barcode?.takeIf { it.isNotEmpty() }
-                    ?.mapNotNull { it.rawValue }
+                    ?.mapNotNull { scannedCode ->
+                        val rawValue = scannedCode.rawValue ?: return@mapNotNull null
+                        val codeType = scannedCode.format.toCodeType() ?: return@mapNotNull null
+                        rawValue to codeType
+                    }
                     ?.forEach {
-                        if (onScanned(it)) {
+                        if (onScanned(it.first, it.second)) {
                             scanner.close()
                         }
                     }

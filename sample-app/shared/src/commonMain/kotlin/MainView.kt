@@ -80,20 +80,20 @@ fun MainView() {
                 val scope = rememberCoroutineScope()
                 ScannerWithPermissions(
                     modifier = Modifier.padding(16.dp),
-                    onScanned = {
-                        if (lastCode == it) { return@ScannerWithPermissions false }
+                    onScanned = { code, _ ->
+                        if (lastCode == code) { return@ScannerWithPermissions false }
                         if (TimeSource.Monotonic.markNow().minus(lastSnackbar) < 1.seconds) {
                             return@ScannerWithPermissions false
                         }
                         snackbarJob?.cancel()
                         lastSnackbar = TimeSource.Monotonic.markNow()
                         snackbarJob = scope.launch {
-                            snackbarHostState.showSnackbar(it, duration = SnackbarDuration.Short)
-                            if (lastCode == it) {
+                            snackbarHostState.showSnackbar(code, duration = SnackbarDuration.Short)
+                            if (lastCode == code) {
                                 lastCode = null
                             }
                         }
-                        lastCode = it
+                        lastCode = code
                         false // continue scanning
                     },
                     types = listOf(CodeType.QR),

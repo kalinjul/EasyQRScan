@@ -20,7 +20,7 @@ import platform.UIKit.UIApplicationOpenSettingsURLString
 @Composable
 actual fun Scanner(
     modifier: Modifier,
-    onScanned: (String) -> Boolean, // return true to abort scanning
+    onScanned: (String, CodeType) -> Boolean, // return true to abort scanning
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
@@ -39,9 +39,7 @@ actual fun Scanner(
     }
     UiScannerView(
         modifier = modifier,
-        onScanned = {
-            onScanned(it)
-        },
+        onScanned = onScanned,
         allowedMetadataTypes = types.toFormat(),
         cameraPosition = cameraPosition,
         onStarted = {

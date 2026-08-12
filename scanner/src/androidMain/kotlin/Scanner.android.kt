@@ -17,7 +17,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 @Composable
 actual fun Scanner(
     modifier: Modifier,
-    onScanned: (String) -> Boolean,
+    onScanned: (String, CodeType) -> Boolean,
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,

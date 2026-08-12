@@ -66,13 +66,19 @@ class MavenCentralPublishConventionPlugin : Plugin<Project> {
             }
 
             extensions.configure<SigningExtension> {
-                useInMemoryPgpKeys(
-                    getLocalProperty("SIGNING_KEY_ID") ?: System.getenv("SIGNING_KEY_ID"),
-                    getLocalProperty("SIGNING_KEY") ?: System.getenv("SIGNING_KEY"),
-                    getLocalProperty("SIGNING_KEY_PASSWORD") ?: System.getenv("SIGNING_KEY_PASSWORD"),
-                )
-                val publishing = extensions.getByType<PublishingExtension>()
-                sign(publishing.publications)
+                val signingKeyId = getLocalProperty("SIGNING_KEY_ID") ?: System.getenv("SIGNING_KEY_ID")
+                val signingKey = getLocalProperty("SIGNING_KEY") ?: System.getenv("SIGNING_KEY")
+                val signingPassword = getLocalProperty("SIGNING_KEY_PASSWORD") ?: System.getenv("SIGNING_KEY_PASSWORD")
+
+                if (!signingKey.isNullOrBlank()) {
+                    useInMemoryPgpKeys(
+                        signingKeyId,
+                        signingKey,
+                        signingPassword,
+                    )
+                    val publishing = extensions.getByType<PublishingExtension>()
+                    sign(publishing.publications)
+                }
             }
 
 

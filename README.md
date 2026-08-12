@@ -50,14 +50,17 @@ The scanner is included by calling a single composable function ```Scanner()``` 
 ```kotlin
 // basic permission handling included:
 ScannerWithPermissions(
-    onScanned = { println(it); true }, // return true to disable the scanner, false to continue scanning
+    onScanned = { code, type ->
+        println("Scanned $type: $code")
+        true
+    }, // return true to disable the scanner, false to continue scanning
     types = listOf(CodeType.QR),
     cameraPosition = CameraPosition.BACK,
     enableTorch = false // toggle this to enable/disable the flashlight
 )
 
 // or, if you handle permissions yourself:
-Scanner(onScanned = { println(it); true }, types = listOf(CodeType.QR))
+Scanner(onScanned = { code, type -> println("Scanned $type: $code"); true }, types = listOf(CodeType.QR))
 ```
 
 The camera preview follows your app's interface orientation, so an app that locks its
