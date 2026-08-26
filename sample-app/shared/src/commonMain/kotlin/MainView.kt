@@ -24,6 +24,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.publicvalue.multiplatform.qrcode.CameraPosition
 import org.publicvalue.multiplatform.qrcode.CodeType
+import org.publicvalue.multiplatform.qrcode.ScanAreaBorderStyle
+import org.publicvalue.multiplatform.qrcode.ScanAreaDefaults
 import org.publicvalue.multiplatform.qrcode.ScannerWithPermissions
 import org.publicvalue.multiplatform.qrcode.rememberCameraUtils
 import kotlin.time.Duration.Companion.minutes
@@ -44,14 +46,16 @@ fun MainView() {
             Text("Scan QR-Code below")
             var scannerVisible by remember { mutableStateOf(false) }
             var enableTorch by remember { mutableStateOf(false) }
+            var scanAreaEnabled by remember { mutableStateOf(false) }
+            var scanAreaOutlineStyle by remember { mutableStateOf(false) }
 
             val cameraUtils = rememberCameraUtils()
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text("Toggle scanner")
                     Switch(
                         checked = scannerVisible,
@@ -60,7 +64,11 @@ fun MainView() {
                         }
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text("Toggle torch")
                     Switch(
                         checked = enableTorch,
@@ -71,6 +79,34 @@ fun MainView() {
                             }
                         }
                     )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Toggle scan area")
+                    Switch(
+                        checked = scanAreaEnabled,
+                        onCheckedChange = {
+                            scanAreaEnabled = it
+                        }
+                    )
+                }
+                if (scanAreaEnabled) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Scan area: outline instead of brackets")
+                        Switch(
+                            checked = scanAreaOutlineStyle,
+                            onCheckedChange = {
+                                scanAreaOutlineStyle = it
+                            }
+                        )
+                    }
                 }
             }
             var lastCode by remember { mutableStateOf<String?>(null)}
@@ -99,6 +135,15 @@ fun MainView() {
                     types = listOf(CodeType.QR),
                     cameraPosition = CameraPosition.BACK,
                     enableTorch = enableTorch,
+                    scanArea = if (scanAreaEnabled) {
+                        ScanAreaDefaults.scanArea(
+                            borderStyle = if (scanAreaOutlineStyle) {
+                                ScanAreaBorderStyle.Outline
+                            } else {
+                                ScanAreaBorderStyle.Brackets
+                            },
+                        )
+                    } else null,
                 )
             }
         }

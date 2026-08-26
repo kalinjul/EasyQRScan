@@ -63,6 +63,23 @@ Scanner(onScanned = { println(it); true }, types = listOf(CodeType.QR))
 The camera preview follows your app's interface orientation, so an app that locks its
 orientation gets a fixed preview without any extra configuration.
 
+## Restricting scanning to a centered area
+
+By default, the whole camera frame is scanned. You can opt in to a "viewfinder" area that
+restricts scanning to a rectangle and darkens everything around it, by passing a `scanArea`.
+
+```kotlin
+ScannerWithPermissions(
+    onScanned = { println(it); true },
+    types = listOf(CodeType.QR),
+    scanArea = ScanAreaDefaults.scanArea(
+        size = ScanAreaSize.Relative(sizeFraction = 0.7f, aspectRatio = 1f),
+        borderStyle = ScanAreaBorderStyle.Brackets,
+        strokeJoin = StrokeJoin.Round,
+    ),
+)
+```
+
 Check out the [sample app](./sample-app) included in the repository.
 
 # Code Types

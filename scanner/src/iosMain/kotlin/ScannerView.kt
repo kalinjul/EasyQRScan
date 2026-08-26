@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.BetaInteropApi
@@ -16,6 +17,7 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -34,6 +36,7 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
 import platform.CoreGraphics.CGRect
+import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
 import platform.Foundation.NSNotification
@@ -51,6 +54,7 @@ import platform.UIKit.UIInterfaceOrientationPortrait
 import platform.UIKit.UIInterfaceOrientationPortraitUpsideDown
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
 @Composable
@@ -62,12 +66,14 @@ fun UiScannerView(
     cameraPosition: CameraPosition,
     onScanned: (String) -> Boolean,
     onStarted: () -> Unit,
+    scanArea: ScanArea? = null,
 ) {
-    val coordinator = remember {
+    val coordinator = remember(scanArea) {
         ScannerCameraCoordinator(
             onScanned = onScanned,
             cameraPosition = cameraPosition,
-            onStarted = onStarted
+            onStarted = onStarted,
+            scanArea = scanArea,
         )
     }
 
@@ -157,9 +163,11 @@ class ScannerCameraCoordinator(
     val onScanned: (String) -> Boolean,
     val onStarted: () -> Unit,
     val cameraPosition: CameraPosition,
+    val scanArea: ScanArea? = null,
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
     private var previewLayer: AVCaptureVideoPreviewLayer? = null
+    private var metadataOutput: AVCaptureMetadataOutput? = null
     lateinit var captureSession: AVCaptureSession
 
     private var interfaceOrientation: UIInterfaceOrientation = UIInterfaceOrientationPortrait
@@ -199,6 +207,7 @@ class ScannerCameraCoordinator(
 
             metadataOutput.setMetadataObjectsDelegate(this, queue = dispatch_get_main_queue())
             metadataOutput.metadataObjectTypes = allowedMetadataTypes
+            this.metadataOutput = metadataOutput
         } else {
             println("Could not add output")
             return
@@ -209,9 +218,18 @@ class ScannerCameraCoordinator(
             layer.addSublayer(it)
         }
         applyVideoOrientation()
+        updateRectOfInterest()
 
         GlobalScope.launch(Dispatchers.Default) {
             captureSession.startRunning()
+            // AVCaptureMetadataOutput.rectOfInterest set before the session (and its
+            // connections) are fully live is unreliable - some devices silently reset it back
+            // to the full frame once the capture connection is actually established. Re-apply
+            // it now that startRunning() (a blocking call) has returned, guaranteeing the
+            // connection exists.
+            dispatch_async(dispatch_get_main_queue()) {
+                updateRectOfInterest()
+            }
             onStarted()
         }
     }
@@ -254,5 +272,44 @@ class ScannerCameraCoordinator(
 
     fun setFrame(rect: CValue<CGRect>) {
         previewLayer?.setFrame(rect)
+        updateRectOfInterest()
+    }
+
+    /**
+     * Restricts hardware barcode detection to [scanArea], if set, by mapping its
+     * [ScanArea.cutoutRect] (in preview layer coordinates) to the metadata output's
+     * coordinate space via [AVCaptureVideoPreviewLayer.metadataOutputRectOfInterestForRect].
+     * Without a [scanArea] the whole frame ({{0,0},{1,1}}) remains eligible for detection.
+     */
+    @OptIn(ExperimentalForeignApi::class)
+    private fun updateRectOfInterest() {
+        val output = metadataOutput ?: return
+        val layer = previewLayer ?: return
+        val area = scanArea
+
+        if (area == null) {
+            output.rectOfInterest = CGRectMake(0.0, 0.0, 1.0, 1.0)
+            return
+        }
+
+        val bounds = layer.bounds.useContents { this }
+        if (bounds.size.width <= 0.0 || bounds.size.height <= 0.0) {
+            return
+        }
+
+        val rect = area.cutoutRect(
+            containerWidth = bounds.size.width.toFloat(),
+            containerHeight =bounds.size.height.toFloat(),
+            density = Density(1f), // iOS UIKit is always 1:1, no density scaling like on Android
+        )
+
+        val cutoutRect = CGRectMake(
+            rect.left.toDouble(),
+            rect.top.toDouble(),
+            rect.width.toDouble(),
+            rect.height.toDouble(),
+        )
+
+        output.rectOfInterest = layer.metadataOutputRectOfInterestForRect(rectInLayerCoordinates = cutoutRect)
     }
 }

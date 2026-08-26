@@ -1,5 +1,7 @@
 package org.publicvalue.multiplatform.qrcode
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +26,7 @@ actual fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    scanArea: ScanArea?,
 ) {
     var started by remember { mutableStateOf(false) }
     val cameraUtils = rememberCameraUtils()
@@ -37,18 +40,25 @@ actual fun Scanner(
             cameraUtils.setTorchMode(cameraPosition, false)
         }
     }
-    UiScannerView(
-        modifier = modifier,
-        onScanned = {
-            onScanned(it)
-        },
-        allowedMetadataTypes = types.toFormat(),
-        cameraPosition = cameraPosition,
-        onStarted = {
-            cameraUtils.setTorchMode(cameraPosition, enableTorch)
-            started = true
+    Box(modifier = modifier.fillMaxSize()) {
+        UiScannerView(
+            modifier = Modifier.fillMaxSize(),
+            onScanned = {
+                onScanned(it)
+            },
+            allowedMetadataTypes = types.toFormat(),
+            cameraPosition = cameraPosition,
+            onStarted = {
+                cameraUtils.setTorchMode(cameraPosition, enableTorch)
+                started = true
+            },
+            scanArea = scanArea,
+        )
+
+        if (scanArea != null) {
+            ScanAreaOverlay(scanArea, Modifier.fillMaxSize())
         }
-    )
+    }
 }
 
 @Composable
