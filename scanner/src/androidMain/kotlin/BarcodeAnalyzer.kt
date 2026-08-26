@@ -1,7 +1,6 @@
 package org.publicvalue.multiplatform.qrcode
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.graphics.Rect
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
@@ -34,23 +33,29 @@ class BarcodeAnalyzer(
     private val scanner = BarcodeScanning.getClient(options)
 
     @OptIn(ExperimentalGetImage::class)
-    private fun analyzeFullFrame(imageProxy: ImageProxy) {
+    @SuppressLint("UnsafeOptInUsageError")
+    override fun analyze(imageProxy: ImageProxy) {
         val image = imageProxy.image
         if (image == null) {
             imageProxy.close()
             return
         }
 
-        processScanResults(
-            image = InputImage.fromMediaImage(image, imageProxy.imageInfo.rotationDegrees),
-            imageProxy = imageProxy
-        )
+        val scanWindow = scanArea?.let {
+            computeScanWindow(it, imageProxy) ?: run {
+                imageProxy.close()
+                return
+            }
+        }
+
+        scanner.process(InputImage.fromMediaImage(image, imageProxy.imageInfo.rotationDegrees))
+            .addOnSuccessListener { barcodes -> handleResult(barcodes, scanWindow) }
+            .addOnCompleteListener { imageProxy.close() }
     }
 
-    private fun analyzePartialFrame(scanArea: ScanArea, imageProxy: ImageProxy) {
+    private fun computeScanWindow(scanArea: ScanArea, imageProxy: ImageProxy): Rect? {
         if (containerSize.width <= 0 || containerSize.height <= 0) {
-            imageProxy.close()
-            return
+            return null
         }
 
         val cutoutRect = scanArea.cutoutRect(
@@ -59,78 +64,19 @@ class BarcodeAnalyzer(
             density = density,
         )
 
-        val bufferWidth = imageProxy.width
-        val bufferHeight = imageProxy.height
         val rotation = ((imageProxy.imageInfo.rotationDegrees % 360) + 360) % 360
-        val subRect = mapContainerRectToBufferRect(
+        return mapContainerRectToBufferRect(
             containerRect = cutoutRect,
             containerSize = containerSize,
-            bufferWidth = bufferWidth,
-            bufferHeight = bufferHeight,
+            bufferWidth = imageProxy.width,
+            bufferHeight = imageProxy.height,
             rotationDegrees = rotation,
         )
-
-        if (subRect.width() <= 0 || subRect.height() <= 0) {
-            imageProxy.close()
-            return
-        }
-
-        val fullBitmap = runCatching { imageProxy.toBitmap() }.getOrNull()
-        if (fullBitmap == null) {
-            imageProxy.close()
-            return
-        }
-
-        val safeRect = Rect(
-            subRect.left.coerceIn(0, fullBitmap.width),
-            subRect.top.coerceIn(0, fullBitmap.height),
-            subRect.right.coerceIn(0, fullBitmap.width),
-            subRect.bottom.coerceIn(0, fullBitmap.height),
-        )
-
-        if (safeRect.width() <= 0 || safeRect.height() <= 0) {
-            imageProxy.close()
-            return
-        }
-
-        val bitmap = runCatching {
-            Bitmap.createBitmap(
-                fullBitmap,
-                safeRect.left,
-                safeRect.top,
-                safeRect.width(),
-                safeRect.height()
-            )
-        }.getOrNull()
-
-        if (bitmap == null) {
-            imageProxy.close()
-            return
-        }
-
-        processScanResults(
-            image = InputImage.fromBitmap(bitmap, imageProxy.imageInfo.rotationDegrees),
-            imageProxy = imageProxy
-        )
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
-    override fun analyze(imageProxy: ImageProxy) {
-        if (scanArea != null) {
-            return analyzePartialFrame(scanArea, imageProxy)
-        }
-
-        return analyzeFullFrame(imageProxy)
-    }
-
-    private fun processScanResults(image: InputImage, imageProxy: ImageProxy) {
-        scanner.process(image)
-            .addOnSuccessListener { barcodes -> handleResult(barcodes) }
-            .addOnCompleteListener { imageProxy.close() }
-    }
-
-    private fun handleResult(barcodes: List<Barcode>?) {
+    private fun handleResult(barcodes: List<Barcode>?, scanWindow: Rect?) {
         barcodes?.takeIf { it.isNotEmpty() }
+            ?.filter { scanWindow == null || isBarcodeInScanWindow(scanWindow, it) }
             ?.mapNotNull { it.rawValue }
             ?.forEach {
                 if (onScanned(it)) {
@@ -140,18 +86,11 @@ class BarcodeAnalyzer(
     }
 }
 
-/**
- * Maps [containerRect] (in pixel coordinates of a widget of size [containerSize], e.g. the
- * `ScanAreaOverlay`'s Composable Box) to the corresponding rect in an analysis buffer of size
- * [bufferWidth] x [bufferHeight], assuming the widget displays that buffer with a
- * "BoxFit.cover"-style scale type (matching `PreviewView`'s default `FILL_CENTER`), and that
- * the buffer must be rotated clockwise by [rotationDegrees] (as reported by
- * `ImageProxy.imageInfo.rotationDegrees`) to appear upright the way it's shown on screen.
- *
- * This lets us restrict ML Kit scanning to exactly the region that's visually darkened by
- * [ScanAreaOverlay], without relying on a shared CameraX `ViewPort` between `Preview` and
- * `ImageAnalysis`.
- */
+private fun isBarcodeInScanWindow(scanWindow: Rect, barcode: Barcode): Boolean {
+    val cornerPoints = barcode.cornerPoints ?: return false
+    return cornerPoints.all { scanWindow.contains(it.x, it.y) }
+}
+
 internal fun mapContainerRectToBufferRect(
     containerRect: ComposeRect,
     containerSize: IntSize,
