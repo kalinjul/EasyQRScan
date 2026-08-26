@@ -111,7 +111,6 @@ private fun DrawScope.drawCornerBrackets(
         lineTo(otherArmEnd.x, otherArmEnd.y)
     }
 
-    // Top-left
     val topLeftArm = armLength(topLeftRadius)
     drawPath(
         path = corner(
@@ -125,7 +124,6 @@ private fun DrawScope.drawCornerBrackets(
         color = color,
         style = stroke,
     )
-    // Top-right
     val topRightArm = armLength(topRightRadius)
     drawPath(
         path = corner(
@@ -139,7 +137,6 @@ private fun DrawScope.drawCornerBrackets(
         color = color,
         style = stroke,
     )
-    // Bottom-left
     val bottomLeftArm = armLength(bottomLeftRadius)
     drawPath(
         path = corner(
@@ -153,7 +150,6 @@ private fun DrawScope.drawCornerBrackets(
         color = color,
         style = stroke,
     )
-    // Bottom-right
     val bottomRightArm = armLength(bottomRightRadius)
     drawPath(
         path = corner(

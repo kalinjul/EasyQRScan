@@ -7,6 +7,7 @@ import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect as ComposeRect
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
@@ -56,45 +57,61 @@ class BarcodeAnalyzer(
     }
 
     private fun analyzePartialFrame(scanArea: ScanArea, imageProxy: ImageProxy) {
-        // A ScanArea is set: restrict the frame that is analyzed to the same rect that is
-        // visualized by ScanAreaOverlay. PreviewView uses FILL_CENTER (a "BoxFit.cover"-style
-        // scale type) by default, so we map the cutout rect from container (widget)
-        // coordinates to the analysis buffer's coordinates by replicating that same
-        // cover-scaling + centering, then correcting for the buffer's sensor rotation - this
-        // avoids needing a CameraX ViewPort (which previously caused a black-screen bug) while
-        // still keeping the scanned region in sync with what's drawn on screen.
-        val container = containerSize
-        if (container.width <= 0 || container.height <= 0) {
+        if (containerSize.width <= 0 || containerSize.height <= 0) {
             imageProxy.close()
             return
         }
 
         val cutoutRect = scanArea.cutoutRect(
-            container.width.toFloat(),
-            container.height.toFloat(),
-            density,
+            containerWidth = containerSize.width.toFloat(),
+            containerHeight = containerSize.height.toFloat(),
+            density = density,
         )
 
-        val bufferRect = imageProxy.cropRect
+        val bufferWidth = imageProxy.width
+        val bufferHeight = imageProxy.height
         val rotation = ((imageProxy.imageInfo.rotationDegrees % 360) + 360) % 360
         val subRect = mapContainerRectToBufferRect(
             containerRect = cutoutRect,
-            containerSize = container,
-            bufferWidth = bufferRect.width(),
-            bufferHeight = bufferRect.height(),
+            containerSize = containerSize,
+            bufferWidth = bufferWidth,
+            bufferHeight = bufferHeight,
             rotationDegrees = rotation,
-        ).also {
-            it.offset(bufferRect.left, bufferRect.top)
-        }
+        )
 
         if (subRect.width() <= 0 || subRect.height() <= 0) {
             imageProxy.close()
             return
         }
 
-        imageProxy.setCropRect(subRect)
+        val fullBitmap = runCatching { imageProxy.toBitmap() }.getOrNull()
+        if (fullBitmap == null) {
+            imageProxy.close()
+            return
+        }
 
-        val bitmap = runCatching { imageProxy.toBitmap() }.getOrNull()
+        val safeRect = Rect(
+            subRect.left.coerceIn(0, fullBitmap.width),
+            subRect.top.coerceIn(0, fullBitmap.height),
+            subRect.right.coerceIn(0, fullBitmap.width),
+            subRect.bottom.coerceIn(0, fullBitmap.height),
+        )
+
+        if (safeRect.width() <= 0 || safeRect.height() <= 0) {
+            imageProxy.close()
+            return
+        }
+
+        val bitmap = runCatching {
+            Bitmap.createBitmap(
+                fullBitmap,
+                safeRect.left,
+                safeRect.top,
+                safeRect.width(),
+                safeRect.height()
+            )
+        }.getOrNull()
+
         if (bitmap == null) {
             imageProxy.close()
             return
@@ -167,37 +184,42 @@ internal fun mapContainerRectToBufferRect(
     )
     val scaledWidth = displayWidth * scale
     val scaledHeight = displayHeight * scale
-    val originX = (containerSize.width - scaledWidth) / 2f
-    val originY = (containerSize.height - scaledHeight) / 2f
+    val displayOrigin = Offset(
+        x = (containerSize.width - scaledWidth) / 2f,
+        y = (containerSize.height - scaledHeight) / 2f,
+    )
 
-    fun toDisplay(x: Float, y: Float): Pair<Float, Float> {
-        return (x - originX) / scale to (y - originY) / scale
+    // Undoes the "cover" scaling+centering: a point in container (widget) coordinates maps
+    // to the same physical point in the (still upright, un-rotated-back) display-space image.
+    fun containerPointToDisplayPoint(point: Offset): Offset = Offset(
+        x = (point.x - displayOrigin.x) / scale,
+        y = (point.y - displayOrigin.y) / scale,
+    )
+
+    // Undoes the sensor rotation: a point in display-space (upright, as shown on screen) maps
+    // to the corresponding point in the analysis buffer's own (un-rotated) coordinate space.
+    fun displayPointToBufferPoint(point: Offset): Offset = when (rotationDegrees) {
+        90 -> Offset(x = point.y, y = displayWidth - point.x)
+        180 -> Offset(x = displayWidth - point.x, y = displayHeight - point.y)
+        270 -> Offset(x = displayHeight - point.y, y = point.x)
+        else -> point
     }
 
-    fun displayToBuffer(dx: Float, dy: Float): Pair<Float, Float> {
-        return when (rotationDegrees) {
-            90 -> dy to (displayWidth - dx)
-            180 -> (displayWidth - dx) to (displayHeight - dy)
-            270 -> (displayHeight - dy) to dx
-            else -> dx to dy
-        }
-    }
+    fun containerPointToBufferPoint(point: Offset): Offset =
+        displayPointToBufferPoint(containerPointToDisplayPoint(point))
 
     // Map all four corners (not just top-left/bottom-right) since rotation can swap axes.
-    val corners = listOf(
-        containerRect.left to containerRect.top,
-        containerRect.right to containerRect.top,
-        containerRect.left to containerRect.bottom,
-        containerRect.right to containerRect.bottom,
-    ).map { (x, y) ->
-        val (dx, dy) = toDisplay(x, y)
-        displayToBuffer(dx, dy)
-    }
+    val bufferCorners = listOf(
+        Offset(containerRect.left, containerRect.top),
+        Offset(containerRect.right, containerRect.top),
+        Offset(containerRect.left, containerRect.bottom),
+        Offset(containerRect.right, containerRect.bottom),
+    ).map(::containerPointToBufferPoint)
 
-    val left = corners.minOf { it.first }.coerceIn(0f, bufferWidth.toFloat())
-    val right = corners.maxOf { it.first }.coerceIn(0f, bufferWidth.toFloat())
-    val top = corners.minOf { it.second }.coerceIn(0f, bufferHeight.toFloat())
-    val bottom = corners.maxOf { it.second }.coerceIn(0f, bufferHeight.toFloat())
+    val left = bufferCorners.minOf { it.x }.coerceIn(0f, bufferWidth.toFloat())
+    val right = bufferCorners.maxOf { it.x }.coerceIn(0f, bufferWidth.toFloat())
+    val top = bufferCorners.minOf { it.y }.coerceIn(0f, bufferHeight.toFloat())
+    val bottom = bufferCorners.maxOf { it.y }.coerceIn(0f, bufferHeight.toFloat())
 
     return Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
 }

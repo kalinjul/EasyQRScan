@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
  * @param onScanned Called when a code was scanned. The given lambda should return true
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
- * @param scanArea Optional centered scan area. When set, scanning is restricted to this
+ * @param scanArea Optional scan area. When set, scanning is restricted to this
  *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
  *                 the full frame is scanned and no overlay is drawn.
  */
@@ -41,7 +41,7 @@ expect fun Scanner(
  *                  Return false if scanning should continue.
  * @param permissionText Text to show if permission was denied.
  * @param openSettingsLabel Label to show on the "Go to settings" Button
- * @param scanArea Optional centered scan area. When set, scanning is restricted to this
+ * @param scanArea Optional scan area. When set, scanning is restricted to this
  *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
  *                 the full frame is scanned and no overlay is drawn.
  */
@@ -85,7 +85,7 @@ fun ScannerWithPermissions(
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
  * @param permissionDeniedContent Content to show if permission was denied.
- * @param scanArea Optional centered scan area. When set, scanning is restricted to this
+ * @param scanArea Optional scan area. When set, scanning is restricted to this
  *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
  *                 the full frame is scanned and no overlay is drawn.
  */

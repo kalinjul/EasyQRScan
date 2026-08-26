@@ -53,6 +53,7 @@ import platform.UIKit.UIInterfaceOrientationPortrait
 import platform.UIKit.UIInterfaceOrientationPortraitUpsideDown
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
 @Composable
@@ -220,6 +221,15 @@ class ScannerCameraCoordinator(
 
         GlobalScope.launch(Dispatchers.Default) {
             captureSession.startRunning()
+            // AVCaptureMetadataOutput.rectOfInterest set before the session (and its
+            // connections) are fully live is unreliable - some devices silently reset it back
+            // to the full frame once the capture connection is actually established. Re-apply
+            // it now that startRunning() (a blocking call) has returned, guaranteeing the
+            // connection exists. Hop back to the main queue since previewLayer/metadataOutput
+            // are otherwise only touched from there.
+            dispatch_async(dispatch_get_main_queue()) {
+                updateRectOfInterest()
+            }
             onStarted()
         }
     }
@@ -283,6 +293,12 @@ class ScannerCameraCoordinator(
         }
 
         val bounds = layer.bounds.useContents { this }
+        if (bounds.size.width <= 0.0 || bounds.size.height <= 0.0) {
+            // Layer not laid out yet (e.g. the very first call in prepare(), before the
+            // interop view has a real frame) - skip for now, a later call (from setFrame() /
+            // after startRunning()) will apply the correct rect once bounds are valid.
+            return
+        }
         // iOS points are already density-independent (like Dp), so a Density of 1 maps
         // Dp values 1:1 to points.
         val rect = area.cutoutRect(
