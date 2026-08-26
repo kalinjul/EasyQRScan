@@ -39,8 +39,11 @@ class BarcodeAnalyzer(
     }
 
     private fun analyzePartialFrame(scanArea: ScanArea, imageProxy: ImageProxy) {
-        // A ScanArea is set: restrict the frame that is analyzed to the centered sub-rect of
-        // the (already viewport-aligned) crop rect, so scanning matches the visible cutout.
+        // A ScanArea is set: restrict the frame that is analyzed to a centered sub-rect of
+        // the analyzer's frame, so scanning matches the visible cutout drawn by the overlay.
+        // Note: without a shared CameraX ViewPort between Preview and ImageAnalysis, this is
+        // an approximation - the ImageAnalysis buffer's aspect ratio can differ slightly from
+        // what is visible in the preview.
         val visibleRect = imageProxy.cropRect
         val subRect = Rect(
             visibleRect.left + (visibleRect.width() * (1 - scanArea.widthFraction) / 2f).toInt(),
