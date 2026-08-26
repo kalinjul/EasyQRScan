@@ -7,9 +7,12 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.PermissionStatus
@@ -27,7 +30,15 @@ actual fun Scanner(
     val analyzer = remember(types, scanArea) {
         BarcodeAnalyzer(types.toFormat(), scanArea, onScanned)
     }
-    Box(modifier = modifier.fillMaxSize()) {
+    val density = LocalDensity.current
+    LaunchedEffect(density) {
+        analyzer.density = density
+    }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onSizeChanged { analyzer.containerSize = it }
+    ) {
         CameraView(Modifier.fillMaxSize(), analyzer, cameraPosition, enableTorch)
         scanArea?.let { ScanAreaOverlay(it, Modifier.fillMaxSize()) }
     }

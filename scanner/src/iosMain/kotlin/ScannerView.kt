@@ -266,10 +266,10 @@ class ScannerCameraCoordinator(
     }
 
     /**
-     * Restricts hardware barcode detection to the centered [scanArea], if set, by mapping
-     * its fractions (in preview layer coordinates) to the metadata output's coordinate space
-     * via [AVCaptureVideoPreviewLayer.metadataOutputRectOfInterestForRect]. Without a
-     * [scanArea] the whole frame ({{0,0},{1,1}}) remains eligible for detection.
+     * Restricts hardware barcode detection to [scanArea], if set, by mapping its
+     * [ScanArea.cutoutRect] (in preview layer coordinates) to the metadata output's
+     * coordinate space via [AVCaptureVideoPreviewLayer.metadataOutputRectOfInterestForRect].
+     * Without a [scanArea] the whole frame ({{0,0},{1,1}}) remains eligible for detection.
      */
     @OptIn(ExperimentalForeignApi::class)
     private fun updateRectOfInterest() {
@@ -283,15 +283,18 @@ class ScannerCameraCoordinator(
         }
 
         val bounds = layer.bounds.useContents { this }
-        val (cutoutWidth, cutoutHeight) = area.cutoutSize(
+        // iOS points are already density-independent (like Dp), so a Density of 1 maps
+        // Dp values 1:1 to points.
+        val rect = area.cutoutRect(
             bounds.size.width.toFloat(),
             bounds.size.height.toFloat(),
+            androidx.compose.ui.unit.Density(1f),
         )
         val cutoutRect = CGRectMake(
-            (bounds.size.width - cutoutWidth.toDouble()) / 2.0,
-            (bounds.size.height - cutoutHeight.toDouble()) / 2.0,
-            cutoutWidth.toDouble(),
-            cutoutHeight.toDouble(),
+            rect.left.toDouble(),
+            rect.top.toDouble(),
+            rect.width.toDouble(),
+            rect.height.toDouble(),
         )
         output.rectOfInterest = layer.metadataOutputRectOfInterestForRect(cutoutRect)
     }
