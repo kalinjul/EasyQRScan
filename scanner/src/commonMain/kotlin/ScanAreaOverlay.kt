@@ -59,7 +59,15 @@ fun ScanAreaOverlay(
 
             when (scanArea.borderStyle) {
                 ScanAreaBorderStyle.Outline -> {
-                    drawPath(path = Path().apply { addRoundRect(roundRect) }, color = borderColor, style = stroke)
+                    val path = Path().apply {
+                        addRoundRect(roundRect)
+                    }
+
+                    drawPath(
+                        path = path,
+                        color = borderColor,
+                        style = stroke
+                    )
                 }
                 ScanAreaBorderStyle.Brackets -> {
                     drawCornerBrackets(

@@ -40,7 +40,10 @@ actual fun Scanner(
             .onSizeChanged { analyzer.containerSize = it }
     ) {
         CameraView(Modifier.fillMaxSize(), analyzer, cameraPosition, enableTorch)
-        scanArea?.let { ScanAreaOverlay(it, Modifier.fillMaxSize()) }
+
+        if (scanArea != null) {
+            ScanAreaOverlay(scanArea, Modifier.fillMaxSize())
+        }
     }
 }
 

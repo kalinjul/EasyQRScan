@@ -21,18 +21,9 @@ class BarcodeAnalyzer(
     private val scanArea: ScanArea? = null,
     private val onScanned: (String) -> Boolean
 ) : ImageAnalysis.Analyzer {
-
-    /**
-     * Size (in pixels) of the Composable container the camera preview and [ScanAreaOverlay]
-     * are drawn into. Updated from `Scanner.android.kt` via `Modifier.onSizeChanged`, and
-     * used together with [density] to compute the exact same cutout rect that is visualized
-     * on screen, so the region we restrict scanning to matches the darkened overlay
-     * pixel-for-pixel (see [analyzePartialFrame]).
-     */
     @Volatile
     var containerSize: IntSize = IntSize.Zero
 
-    /** Density used to resolve Dp values in [ScanArea] to pixels, set alongside [containerSize]. */
     @Volatile
     var density: Density = Density(1f)
 

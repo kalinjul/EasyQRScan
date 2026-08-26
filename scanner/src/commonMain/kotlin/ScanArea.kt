@@ -180,7 +180,7 @@ object ScanAreaDefaults {
  * Computes the cutout width/height (in pixels) for this [ScanArea] within a container of the
  * given size (in pixels).
  */
-fun ScanArea.cutoutSizePx(containerWidth: Float, containerHeight: Float, density: Density): Size {
+private fun ScanArea.cutoutSizePx(containerWidth: Float, containerHeight: Float, density: Density): Size {
     return when (val s = size) {
         is ScanAreaSize.Relative -> {
             val side = minOf(containerWidth, containerHeight) * s.sizeFraction
@@ -199,7 +199,7 @@ fun ScanArea.cutoutSizePx(containerWidth: Float, containerHeight: Float, density
  * overlay and the native (Android/iOS) scan-restriction logic, so the visible cutout always
  * matches the actually scanned region.
  */
-fun ScanArea.cutoutRect(containerWidth: Float, containerHeight: Float, density: Density): Rect {
+internal fun ScanArea.cutoutRect(containerWidth: Float, containerHeight: Float, density: Density): Rect {
     val cutoutSize = cutoutSizePx(containerWidth, containerHeight, density)
 
     val containerSize = IntSize(containerWidth.toInt(), containerHeight.toInt())

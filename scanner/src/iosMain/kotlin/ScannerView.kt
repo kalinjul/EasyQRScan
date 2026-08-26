@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.BetaInteropApi
@@ -225,8 +226,7 @@ class ScannerCameraCoordinator(
             // connections) are fully live is unreliable - some devices silently reset it back
             // to the full frame once the capture connection is actually established. Re-apply
             // it now that startRunning() (a blocking call) has returned, guaranteeing the
-            // connection exists. Hop back to the main queue since previewLayer/metadataOutput
-            // are otherwise only touched from there.
+            // connection exists.
             dispatch_async(dispatch_get_main_queue()) {
                 updateRectOfInterest()
             }
@@ -294,24 +294,22 @@ class ScannerCameraCoordinator(
 
         val bounds = layer.bounds.useContents { this }
         if (bounds.size.width <= 0.0 || bounds.size.height <= 0.0) {
-            // Layer not laid out yet (e.g. the very first call in prepare(), before the
-            // interop view has a real frame) - skip for now, a later call (from setFrame() /
-            // after startRunning()) will apply the correct rect once bounds are valid.
             return
         }
-        // iOS points are already density-independent (like Dp), so a Density of 1 maps
-        // Dp values 1:1 to points.
+
         val rect = area.cutoutRect(
-            bounds.size.width.toFloat(),
-            bounds.size.height.toFloat(),
-            androidx.compose.ui.unit.Density(1f),
+            containerWidth = bounds.size.width.toFloat(),
+            containerHeight =bounds.size.height.toFloat(),
+            density = Density(1f), // iOS UIKit is always 1:1, no density scaling like on Android
         )
+
         val cutoutRect = CGRectMake(
             rect.left.toDouble(),
             rect.top.toDouble(),
             rect.width.toDouble(),
             rect.height.toDouble(),
         )
-        output.rectOfInterest = layer.metadataOutputRectOfInterestForRect(cutoutRect)
+
+        output.rectOfInterest = layer.metadataOutputRectOfInterestForRect(rectInLayerCoordinates = cutoutRect)
     }
 }

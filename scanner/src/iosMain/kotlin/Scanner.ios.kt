@@ -54,7 +54,10 @@ actual fun Scanner(
             },
             scanArea = scanArea,
         )
-        scanArea?.let { ScanAreaOverlay(it, Modifier.fillMaxSize()) }
+
+        if (scanArea != null) {
+            ScanAreaOverlay(scanArea, Modifier.fillMaxSize())
+        }
     }
 }
 
