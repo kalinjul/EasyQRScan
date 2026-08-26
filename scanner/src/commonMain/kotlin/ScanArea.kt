@@ -1,6 +1,7 @@
 package org.publicvalue.multiplatform.qrcode
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -14,13 +15,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 
-/**
- * Describes the size of a [ScanArea] cutout.
- *
- * Use [Relative] (the default) to size the cutout as a fraction of the scanner's own size,
- * or [Fixed] for a pixel-precise, absolute size (analogous to `cutOutWidth`/`cutOutHeight`
- * in comparable Flutter scanner libraries).
- */
+@Immutable
 sealed interface ScanAreaSize {
 
     /**
@@ -54,6 +49,7 @@ sealed interface ScanAreaSize {
  * comparable Flutter scanner libraries). Use [ScanAreaCornerRadii.all] for the common case of
  * a single radius applied to all four corners.
  */
+@Immutable
 data class ScanAreaCornerRadii(
     val topLeft: Dp,
     val topRight: Dp,
@@ -61,14 +57,10 @@ data class ScanAreaCornerRadii(
     val bottomRight: Dp,
 ) {
     companion object {
-        /** Creates [ScanAreaCornerRadii] with the same [radius] applied to all four corners. */
         fun all(radius: Dp) = ScanAreaCornerRadii(radius, radius, radius, radius)
     }
 }
 
-/**
- * Style used to draw the border around a [ScanArea] cutout.
- */
 enum class ScanAreaBorderStyle {
     /** Draws four L-shaped corner markers - the classic "viewfinder" look. */
     Brackets,
@@ -98,6 +90,7 @@ enum class ScanAreaBorderStyle {
  * @param strokeCap Cap used at the end of border strokes.
  * @param strokeJoin Join style used where border strokes meet.
  */
+@Immutable
 data class ScanArea(
     val size: ScanAreaSize,
     val alignment: Alignment = Alignment.Center,
@@ -118,14 +111,12 @@ data class ScanArea(
  * @param borderColor Color of the border around the scan rectangle. Pass `null` to draw no
  *                     border.
  */
+@Immutable
 data class ScanAreaColors(
     val overlayColor: Color,
     val borderColor: Color?,
 )
 
-/**
- * Contains default values used by [ScanArea].
- */
 object ScanAreaDefaults {
     const val SizeFraction = 0.7f
     const val AspectRatio = 1f
@@ -133,11 +124,6 @@ object ScanAreaDefaults {
     val BorderWidth = 4.dp
     val CornerLength = 24.dp
 
-    /**
-     * Creates a [ScanArea] with default values, following the same "Defaults" pattern as
-     * Compose Material components (e.g. `TextFieldDefaults`). Defaults to a centered square
-     * cutout with corner markers, matching the viewfinder look used by most scanner apps.
-     */
     @Composable
     fun scanArea(
         size: ScanAreaSize = ScanAreaSize.Relative(SizeFraction, AspectRatio),
@@ -163,9 +149,6 @@ object ScanAreaDefaults {
         strokeJoin = strokeJoin,
     )
 
-    /**
-     * Creates a [ScanAreaColors] with default values.
-     */
     @Composable
     fun colors(
         overlayColor: Color = Color.Black.copy(alpha = 0.6f),
@@ -192,13 +175,6 @@ private fun ScanArea.cutoutSizePx(containerWidth: Float, containerHeight: Float,
     }
 }
 
-/**
- * Computes the cutout's position + size (in pixels) for this [ScanArea] within a container of
- * the given size (in pixels), taking [ScanArea.alignment] and [ScanArea.offset] into account.
- * This is the single source of truth for where the cutout is placed, shared by the Compose
- * overlay and the native (Android/iOS) scan-restriction logic, so the visible cutout always
- * matches the actually scanned region.
- */
 internal fun ScanArea.cutoutRect(containerWidth: Float, containerHeight: Float, density: Density): Rect {
     val cutoutSize = cutoutSizePx(containerWidth, containerHeight, density)
 

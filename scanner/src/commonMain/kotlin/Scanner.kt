@@ -19,8 +19,7 @@ import androidx.compose.ui.unit.dp
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
  * @param scanArea Optional scan area. When set, scanning is restricted to this
- *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
- *                 the full frame is scanned and no overlay is drawn.
+ *                 region and the surrounding area is darkened. Defaults to `null`.
  */
 @Composable
 expect fun Scanner(
@@ -42,8 +41,7 @@ expect fun Scanner(
  * @param permissionText Text to show if permission was denied.
  * @param openSettingsLabel Label to show on the "Go to settings" Button
  * @param scanArea Optional scan area. When set, scanning is restricted to this
- *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
- *                 the full frame is scanned and no overlay is drawn.
+ *                 region and the surrounding area is darkened. Defaults to `null`.
  */
 @Composable
 fun ScannerWithPermissions(
@@ -51,7 +49,7 @@ fun ScannerWithPermissions(
     onScanned: (String) -> Boolean,
     types: List<CodeType>,
     cameraPosition: CameraPosition = CameraPosition.BACK,
-    enableTorch: Boolean,
+    enableTorch: Boolean= false,
     permissionText: String = "Camera is required for QR Code scanning",
     openSettingsLabel: String = "Open Settings",
     scanArea: ScanArea? = null,
@@ -86,8 +84,7 @@ fun ScannerWithPermissions(
  *                  Return false if scanning should continue.
  * @param permissionDeniedContent Content to show if permission was denied.
  * @param scanArea Optional scan area. When set, scanning is restricted to this
- *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
- *                 the full frame is scanned and no overlay is drawn.
+ *                 region and the surrounding area is darkened. Defaults to `null`.
  */
 @Composable
 fun ScannerWithPermissions(

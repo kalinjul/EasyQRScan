@@ -17,10 +17,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 
 /**
  * Draws a darkened overlay covering the whole available size with a transparent cutout
- * matching [scanArea], plus a border around it - either four corner markers (the classic
- * "viewfinder" look) or a single continuous outline, depending on [ScanArea.borderStyle].
- * Used by [Scanner] to visualize the region that is actually being scanned when a [ScanArea]
- * is provided.
+ * matching [scanArea], plus a border around it.
  */
 @Composable
 fun ScanAreaOverlay(
@@ -87,9 +84,7 @@ fun ScanAreaOverlay(
 }
 
 /**
- * Draws four L-shaped corner markers around [rect]. Each marker follows the same rounding as
- * the cutout: a straight arm, an arc matching the corner's own radius, then the perpendicular
- * arm - so the marker's curve lines up exactly with the darkened area's rounded edge.
+ * Draws four L-shaped corner markers around [rect].
  */
 private fun DrawScope.drawCornerBrackets(
     rect: Rect,
