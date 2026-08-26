@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
  * @param onScanned Called when a code was scanned. The given lambda should return true
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
+ * @param scanArea Optional centered scan area. When set, scanning is restricted to this
+ *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
+ *                 the full frame is scanned and no overlay is drawn.
  */
 @Composable
 expect fun Scanner(
@@ -26,6 +29,7 @@ expect fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition = CameraPosition.BACK,
     enableTorch: Boolean,
+    scanArea: ScanArea? = null,
 )
 
 /**
@@ -37,6 +41,9 @@ expect fun Scanner(
  *                  Return false if scanning should continue.
  * @param permissionText Text to show if permission was denied.
  * @param openSettingsLabel Label to show on the "Go to settings" Button
+ * @param scanArea Optional centered scan area. When set, scanning is restricted to this
+ *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
+ *                 the full frame is scanned and no overlay is drawn.
  */
 @Composable
 fun ScannerWithPermissions(
@@ -47,6 +54,7 @@ fun ScannerWithPermissions(
     enableTorch: Boolean,
     permissionText: String = "Camera is required for QR Code scanning",
     openSettingsLabel: String = "Open Settings",
+    scanArea: ScanArea? = null,
 ) {
     ScannerWithPermissions(
         modifier = modifier.clipToBounds(),
@@ -54,6 +62,7 @@ fun ScannerWithPermissions(
         types = types,
         cameraPosition = cameraPosition,
         enableTorch = enableTorch,
+        scanArea = scanArea,
         permissionDeniedContent = { permissionState ->
             Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -76,6 +85,9 @@ fun ScannerWithPermissions(
  *                  if scanning was successful and scanning should be aborted.
  *                  Return false if scanning should continue.
  * @param permissionDeniedContent Content to show if permission was denied.
+ * @param scanArea Optional centered scan area. When set, scanning is restricted to this
+ *                 region and the surrounding area is darkened. Defaults to `null`, i.e.
+ *                 the full frame is scanned and no overlay is drawn.
  */
 @Composable
 fun ScannerWithPermissions(
@@ -84,6 +96,7 @@ fun ScannerWithPermissions(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    scanArea: ScanArea? = null,
     permissionDeniedContent: @Composable (CameraPermissionState) -> Unit,
 ) {
     val permissionState = rememberCameraPermissionState()
@@ -101,6 +114,7 @@ fun ScannerWithPermissions(
             onScanned = onScanned,
             cameraPosition = cameraPosition,
             enableTorch = enableTorch,
+            scanArea = scanArea,
         )
     } else {
         permissionDeniedContent(permissionState)

@@ -24,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.publicvalue.multiplatform.qrcode.CameraPosition
 import org.publicvalue.multiplatform.qrcode.CodeType
+import org.publicvalue.multiplatform.qrcode.ScanAreaDefaults
 import org.publicvalue.multiplatform.qrcode.ScannerWithPermissions
 import org.publicvalue.multiplatform.qrcode.rememberCameraUtils
 import kotlin.time.Duration.Companion.minutes
@@ -44,6 +45,7 @@ fun MainView() {
             Text("Scan QR-Code below")
             var scannerVisible by remember { mutableStateOf(false) }
             var enableTorch by remember { mutableStateOf(false) }
+            var scanAreaEnabled by remember { mutableStateOf(false) }
 
             val cameraUtils = rememberCameraUtils()
             Row(
@@ -69,6 +71,15 @@ fun MainView() {
                             if (!scannerVisible) { // android needs separate handling when capturing video
                                 cameraUtils.setTorchMode(CameraPosition.BACK, it)
                             }
+                        }
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Toggle scan area")
+                    Switch(
+                        checked = scanAreaEnabled,
+                        onCheckedChange = {
+                            scanAreaEnabled = it
                         }
                     )
                 }
@@ -99,6 +110,7 @@ fun MainView() {
                     types = listOf(CodeType.QR),
                     cameraPosition = CameraPosition.BACK,
                     enableTorch = enableTorch,
+                    scanArea = if (scanAreaEnabled) ScanAreaDefaults.scanArea() else null,
                 )
             }
         }

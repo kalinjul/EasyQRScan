@@ -16,6 +16,7 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -34,6 +35,7 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVMetadataMachineReadableCodeObject
 import platform.AVFoundation.AVMetadataObjectType
 import platform.CoreGraphics.CGRect
+import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSError
 import platform.Foundation.NSNotification
@@ -62,12 +64,14 @@ fun UiScannerView(
     cameraPosition: CameraPosition,
     onScanned: (String) -> Boolean,
     onStarted: () -> Unit,
+    scanArea: ScanArea? = null,
 ) {
-    val coordinator = remember {
+    val coordinator = remember(scanArea) {
         ScannerCameraCoordinator(
             onScanned = onScanned,
             cameraPosition = cameraPosition,
-            onStarted = onStarted
+            onStarted = onStarted,
+            scanArea = scanArea,
         )
     }
 
@@ -157,9 +161,11 @@ class ScannerCameraCoordinator(
     val onScanned: (String) -> Boolean,
     val onStarted: () -> Unit,
     val cameraPosition: CameraPosition,
+    val scanArea: ScanArea? = null,
 ): AVCaptureMetadataOutputObjectsDelegateProtocol, NSObject() {
 
     private var previewLayer: AVCaptureVideoPreviewLayer? = null
+    private var metadataOutput: AVCaptureMetadataOutput? = null
     lateinit var captureSession: AVCaptureSession
 
     private var interfaceOrientation: UIInterfaceOrientation = UIInterfaceOrientationPortrait
@@ -199,6 +205,7 @@ class ScannerCameraCoordinator(
 
             metadataOutput.setMetadataObjectsDelegate(this, queue = dispatch_get_main_queue())
             metadataOutput.metadataObjectTypes = allowedMetadataTypes
+            this.metadataOutput = metadataOutput
         } else {
             println("Could not add output")
             return
@@ -209,6 +216,7 @@ class ScannerCameraCoordinator(
             layer.addSublayer(it)
         }
         applyVideoOrientation()
+        updateRectOfInterest()
 
         GlobalScope.launch(Dispatchers.Default) {
             captureSession.startRunning()
@@ -254,5 +262,35 @@ class ScannerCameraCoordinator(
 
     fun setFrame(rect: CValue<CGRect>) {
         previewLayer?.setFrame(rect)
+        updateRectOfInterest()
+    }
+
+    /**
+     * Restricts hardware barcode detection to the centered [scanArea], if set, by mapping
+     * its fractions (in preview layer coordinates) to the metadata output's coordinate space
+     * via [AVCaptureVideoPreviewLayer.metadataOutputRectOfInterestForRect]. Without a
+     * [scanArea] the whole frame ({{0,0},{1,1}}) remains eligible for detection.
+     */
+    @OptIn(ExperimentalForeignApi::class)
+    private fun updateRectOfInterest() {
+        val output = metadataOutput ?: return
+        val layer = previewLayer ?: return
+        val area = scanArea
+
+        if (area == null) {
+            output.rectOfInterest = CGRectMake(0.0, 0.0, 1.0, 1.0)
+            return
+        }
+
+        val bounds = layer.bounds.useContents { this }
+        val cutoutWidth = bounds.size.width * area.widthFraction.toDouble()
+        val cutoutHeight = bounds.size.height * area.heightFraction.toDouble()
+        val cutoutRect = CGRectMake(
+            (bounds.size.width - cutoutWidth) / 2.0,
+            (bounds.size.height - cutoutHeight) / 2.0,
+            cutoutWidth,
+            cutoutHeight,
+        )
+        output.rectOfInterest = layer.metadataOutputRectOfInterestForRect(cutoutRect)
     }
 }

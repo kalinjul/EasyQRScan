@@ -11,6 +11,7 @@ actual fun Scanner(
     types: List<CodeType>,
     cameraPosition: CameraPosition,
     enableTorch: Boolean,
+    scanArea: ScanArea?,
 ) {
     Text("Scanner not implemented for JVM")
 }
