@@ -283,13 +283,15 @@ class ScannerCameraCoordinator(
         }
 
         val bounds = layer.bounds.useContents { this }
-        val cutoutWidth = bounds.size.width * area.widthFraction.toDouble()
-        val cutoutHeight = bounds.size.height * area.heightFraction.toDouble()
+        val (cutoutWidth, cutoutHeight) = area.cutoutSize(
+            bounds.size.width.toFloat(),
+            bounds.size.height.toFloat(),
+        )
         val cutoutRect = CGRectMake(
-            (bounds.size.width - cutoutWidth) / 2.0,
-            (bounds.size.height - cutoutHeight) / 2.0,
-            cutoutWidth,
-            cutoutHeight,
+            (bounds.size.width - cutoutWidth.toDouble()) / 2.0,
+            (bounds.size.height - cutoutHeight.toDouble()) / 2.0,
+            cutoutWidth.toDouble(),
+            cutoutHeight.toDouble(),
         )
         output.rectOfInterest = layer.metadataOutputRectOfInterestForRect(cutoutRect)
     }

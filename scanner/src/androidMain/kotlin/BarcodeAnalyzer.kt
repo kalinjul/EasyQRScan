@@ -45,11 +45,17 @@ class BarcodeAnalyzer(
         // an approximation - the ImageAnalysis buffer's aspect ratio can differ slightly from
         // what is visible in the preview.
         val visibleRect = imageProxy.cropRect
+        val (cutoutWidth, cutoutHeight) = scanArea.cutoutSize(
+            visibleRect.width().toFloat(),
+            visibleRect.height().toFloat(),
+        )
+        val left = visibleRect.left + ((visibleRect.width() - cutoutWidth) / 2f).toInt()
+        val top = visibleRect.top + ((visibleRect.height() - cutoutHeight) / 2f).toInt()
         val subRect = Rect(
-            visibleRect.left + (visibleRect.width() * (1 - scanArea.widthFraction) / 2f).toInt(),
-            visibleRect.top + (visibleRect.height() * (1 - scanArea.heightFraction) / 2f).toInt(),
-            visibleRect.right - (visibleRect.width() * (1 - scanArea.widthFraction) / 2f).toInt(),
-            visibleRect.bottom - (visibleRect.height() * (1 - scanArea.heightFraction) / 2f).toInt(),
+            left,
+            top,
+            left + cutoutWidth.toInt(),
+            top + cutoutHeight.toInt(),
         )
         imageProxy.setCropRect(subRect)
 

@@ -77,8 +77,8 @@ ScannerWithPermissions(
     cameraPosition = CameraPosition.BACK,
     enableTorch = false,
     scanArea = ScanAreaDefaults.scanArea(
-        widthFraction = 0.7f,
-        heightFraction = 0.7f,
+        sizeFraction = 0.7f, // fraction of the smaller screen dimension
+        aspectRatio = 1f, // 1f = square (default); >1f = wider, <1f = taller
         colors = ScanAreaDefaults.colors(
             overlayColor = Color.Black.copy(alpha = 0.6f),
             borderColor = Color.White,
